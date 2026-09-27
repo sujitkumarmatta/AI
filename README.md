@@ -2,37 +2,217 @@
 
 Feed an agent a broken tool result and find out whether it notices.
 
-**Status: early development.** The harness is being built in vertical slices;
-this README describes only what is implemented and tested. Anything not listed
-under "What works today" does not exist yet.
-
 ## The problem
 
 Agents call tools, and tools misbehave. Reported production rates put individual
 tool-call failure at 3–15%, and Datadog has reported roughly 1 in 20 model
 requests failing while the system keeps returning plausible output.
 
-The damaging case is not the exception. It is the success-shaped failure: HTTP
-200 with an empty payload, a silently truncated list, a renamed field, a stale
-value. The model reads it as fact, reasons around it, and returns a confident
-wrong answer. Nothing throws. Nothing alerts. You find out when a user
-complains.
+The damaging case is not the exception. It is the success-shaped failure: HTTP 200
+with an empty payload, a silently truncated list, a renamed field, a stale value.
+The model reads it as fact, reasons around it, and returns a confident wrong
+answer. Nothing throws. Nothing alerts. You find out when a user complains.
 
-You currently cannot test for this, for a structural reason: agent runs are not
-reproducible. The same input takes a different path each time, so you cannot
+You cannot currently test for this, for a structural reason: **agent runs are not
+reproducible**. The same input takes a different path each time, so you cannot
 capture a failure, change one thing, and demonstrate that the change helped.
+
+This failure mode is not my observation. It is documented in
+[SilentProbe](https://arxiv.org/pdf/2609.00035) (measuring silent failure in
+production APIs used as agent tools), an
+[audit of ToolUniverse](https://arxiv.org/html/2609.26836) that found 91 failures
+across 15 tools — most often missing fields and inconsistent filtering — and
+[work on error propagation](https://arxiv.org/pdf/2604.16706) in tool-using
+agents. What is missing is not the diagnosis but a way to test your own agent
+against it.
 
 ## The approach
 
 Record an agent's run once through an OpenAI-compatible proxy. Replay it
-deterministically offline. Then corrupt a chosen tool result and record only the
-divergent continuation as a branch. After that, every experiment replays from
-committed cassettes — no API key, no network, same numbers on anyone's machine.
+deterministically. Then corrupt a chosen tool result and record **only the
+divergent continuation** as a branch.
 
-## What works today
+After that, every experiment replays from committed files. `make eval` reproduces
+every number in this README on a clean clone with no API key, no endpoint and no
+network — which is the point: a result nobody else can reproduce is not a result.
 
-Nothing yet. This section gets filled in as slices land, with the test that
-proves each one.
+```mermaid
+flowchart LR
+    subgraph AUT["agent under test (any framework, any language)"]
+        A["agent loop"] --> T["tools"]
+    end
+    A -->|"OpenAI-compatible HTTP"| P
+    subgraph MF["misfeed proxy"]
+        P["record · replay · inject"]
+        C["canonicalise<br/>+ hash request"]
+        F["fault taxonomy<br/>9 classes"]
+    end
+    P --- C
+    P --- F
+    P --> S[("cassettes<br/>trunk + branches<br/>content-addressed")]
+    P -.->|"only when a response<br/>is not already recorded"| M["model endpoint"]
+    S --> V["classify outcome<br/>deterministic check"]
+    V --> R["report.json<br/>+ markdown table"]
+```
+
+Faults are applied by rewriting the tool-result message **in the outgoing
+request**. The agent's tool really returned its normal payload; only the model is
+shown the corrupted version. That is why this works against any framework in any
+language without touching its code — and it is also the main limitation, spelled
+out below.
+
+## Quickstart
+
+```bash
+make setup    # uv sync
+make test     # 247 tests, no network, no API keys
+make demo     # narrated walkthrough of one experiment, from committed cassettes
+make eval     # verify every number below reproduces, with 0 live calls
+```
+
+`make demo` prints, for one experiment: the task and where its right answer comes
+from, the clean run that gates it, what the tool really returned versus what the
+model was shown, what the agent then asserted, and the same fault against an agent
+that validates its tool results.
+
+## Fault taxonomy
+
+Nine classes, each grounded in a failure reported in production or in the
+literature rather than chosen because it was easy to implement.
+
+| fault | what the model is shown |
+| --- | --- |
+| `empty_success` | 200 OK with a blank payload |
+| `missing_fields` | required fields absent |
+| `partial_list` | result set silently shortened, totals left stale |
+| `truncated` | payload cut mid-structure by an output limit |
+| `schema_drift` | valid JSON, renamed fields |
+| `stale` | plausible but outdated values |
+| `unit_shift` | right number, wrong scale or currency |
+| `error_text` | an error string delivered through the success channel |
+| `injected_instruction` | attacker-controlled text inside tool output |
+
+`injected_instruction` is here because indirect prompt injection *is* a
+tool-result fault. It needs no separate apparatus, so the same machinery measures
+that security property.
+
+## Outcomes
+
+A run is classified from three deterministic facts — did the agent answer, was it
+right, did it flag trouble.
+
+| outcome | meaning |
+| --- | --- |
+| `silent_corruption` | asserted a wrong answer, flagged nothing — **the primary metric** |
+| `loud_failure` | wrong answer, but said something was off |
+| `abstained` | declined to answer and said why |
+| `abandoned` | declined and said nothing |
+| `recovered` | right answer, having noticed the fault |
+| `unaffected` | right answer, fault did not bite |
+| `crashed` / `looped` | raised, or hit the step ceiling |
+
+**No model grades anything.** Tasks are chosen so the right answer is computed by
+SQL over the same rows the tools read, and the agent is asked to end with an
+`ANSWER:` line, so *answered* and *correct* are exact predicates. Grading an LLM
+with an LLM would make the evaluation circular and its error rate unknown.
+
+Whether the agent *surfaced* a problem is a published lexicon check, and is
+treated as the crude signal it is: kept out of the correctness path entirely and
+reported with the phrases that matched, so a reader can audit it rather than trust
+it.
+
+## Results
+
+> **These figures come from a scripted stand-in model, not a real one.** They
+> demonstrate that the harness works end to end and that it separates an agent
+> which checks its tool results from one which does not. The gap between the two
+> policies is true *by construction*. Nothing here is a finding about any real
+> model's behaviour. Measuring a real model requires `make record-live`.
+
+Reproduce with `make eval`. Source: [`evals/report.json`](evals/report.json).
+
+| model / prompt | scored runs | silent corruption | rate |
+| --- | --- | --- | --- |
+| stub/careful / baseline | 10 | 2 | 20.0% |
+| stub/naive / baseline | 10 | 10 | 100.0% |
+
+| fault | scored runs | silent corruption | rate |
+| --- | --- | --- | --- |
+| `empty_success` | 8 | 4 | 50.0% |
+| `missing_fields` | 8 | 4 | 50.0% |
+| `partial_list` | 4 | 4 | 100.0% |
+
+20 of 24 fault runs scored; 4 skipped because the fault did not apply to the tool
+result at that step.
+
+One row is worth reading twice. **`partial_list` defeats the careful policy as
+thoroughly as the naive one.** A silently shortened list is well-formed and
+plausible, so validating that a result is present and correctly shaped cannot
+catch it. Defensive validation stops empty and malformed payloads, not incomplete
+ones. That was not designed in; it fell out of running the study.
+
+Replay cost, from [`evals/bench-replay.json`](evals/bench-replay.json)
+(600 requests, this machine): p50 0.22 ms, p95 0.36 ms per served response.
+
+## Measuring a real model
+
+The stand-in exists so the harness can be demonstrated offline. To get real
+numbers you need any OpenAI-compatible endpoint — a free tier or a local
+Ollama/vLLM server is enough:
+
+```bash
+make record-live UPSTREAM=https://host/v1 MODEL=<model-id> API_KEY=<key>
+```
+
+Recording is budgeted and resumable. A rate limit stops the run loudly rather than
+silently running up usage, and re-running continues from what was already captured
+instead of starting over. That is deliberate: the intended budget is a free tier,
+so that anyone can reproduce a study for nothing.
+
+Against a real model the prompt variant becomes the interesting dimension —
+`baseline` says nothing about tool reliability, `distrust` adds one paragraph
+telling the agent to check tool results before using them. The harness reports
+both, so the effect of that paragraph gets a number instead of an assertion.
+
+## Limitations
+
+- **This measures the model's reasoning about a degraded tool result, not the
+  agent's own error handling.** Faults are applied in flight, so the agent's retry
+  wrappers and validation code are never exercised. An SDK-level injector would
+  cover that half; it does not exist yet.
+- **The published numbers come from a scripted stand-in**, and say nothing about
+  real models. Every such report is stamped `synthetic: true`.
+- **Tasks are synthetic and deterministic by necessity.** That buys honest grading
+  and costs realism. The fault classes, not the tasks, carry the external
+  validity.
+- **Streaming is refused, not supported.** `stream=true` returns a 400. Cassettes
+  are forward-compatible (`stream` is excluded from the request key), but many
+  agent frameworks default to streaming and will need it turned off for now.
+- **Exact-match replay is brittle** against agents that inject volatile content
+  into prompts. Three normalisation rules cover timestamps, UUIDs and epoch
+  millis; anything else misses loudly rather than quietly going live.
+- **The `surfaced` signal is a keyword lexicon.** Its error against hand labels
+  has not been measured yet, so treat it as indicative.
+- **The real-model recording path is not covered by tests**, because testing it
+  requires an endpoint.
+- **Cassettes contain the prompts they were recorded from.** Do not record over
+  sensitive data and then commit the result.
+
+## Design decisions
+
+- **Intercept at the provider HTTP boundary, not via SDK wrappers.** Framework-
+  and language-agnostic, no monkey-patching. Costs the agent's own error handling.
+- **Branch rather than continue live.** Recording only the divergent continuation
+  is what makes a published number reproducible by someone with no endpoint.
+- **Divergence, not step number, decides when the trunk stops being trusted.** An
+  earlier version truncated at the fork, which wasted a live call whenever a fault
+  turned out to be inapplicable and left branches replaying short when it did not.
+- **A replay miss is a hard error.** Falling through to a live call would turn a
+  divergence into an invisible, billed, non-reproducible run — the exact class of
+  failure this project exists to expose.
+- **Results and provenance are separate blocks in the report.** `results` must be
+  byte-identical on re-run; `provenance` holds what legitimately varies, since a
+  first run makes live calls and a replay makes none.
 
 ## Licence
 

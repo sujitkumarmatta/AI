@@ -1,0 +1,12 @@
+{
+  "ms": {
+    "max": 1.46,
+    "p50": 0.223,
+    "p95": 0.363,
+    "p99": 0.525
+  },
+  "note": "Time to serve one recorded response from disk-backed cassettes, no upstream involved. Includes canonicalisation and hashing of the request. Machine-dependent; regenerate with scripts/bench_replay.py.",
+  "replays": 200,
+  "requests_served": 600,
+  "trace": "trunk--stub-careful--baseline--T1_shipped_total"
+}

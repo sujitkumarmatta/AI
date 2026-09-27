@@ -56,4 +56,4 @@ known-first-party = ["misfeed", "evals"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["src/misfeed", "evals", "tests"]
+files = ["src/misfeed", "evals", "tests", "scripts"]
