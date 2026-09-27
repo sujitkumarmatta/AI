@@ -28,9 +28,20 @@ test needs one environment variable pointed at the proxy.
 
 The cost is real and is stated in the README rather than buried: this exercises the
 model's reasoning about a degraded tool result, not the agent's error handling. The
-agent's retry wrapper sees the genuine payload. Measuring that half needs an
-SDK-level injector, which would be a second mechanism rather than a change to this
-one.
+agent's retry wrapper sees the genuine payload.
+
+That half is now covered by `misfeed.toolfault`, as a second mechanism rather than a
+change to this one, which is the right shape: corrupting what a function returns to its
+caller cannot be done from outside the call without patching, so it is opt-in -- a
+single call inserted at the agent's tool dispatch. A harness that monkey-patched a
+user's tools in order to measure their reliability would be a poor advertisement for
+itself.
+
+Keeping them separate turned out to buy something neither could alone. A fault applied
+in flight lives in the conversation history and is permanent by construction; a
+tool-side fault can be transient, so the two can distinguish "the retry helps" from
+"the failure does not clear". `tests/test_toolfault_integration.py` runs the same agent
+against the same fault three ways and gets three different answers.
 
 A second consequence: because the corruption lives in the request rather than in the
 conversation, it has to be re-applied on every later request. Forgetting that was a

@@ -12,6 +12,8 @@ from misfeed.faults import FAULT_IDS, FaultSpec, apply_fault, inject_into_reques
 from misfeed.proxy import BudgetExceeded, Engine, Mode, ProxyConfig, create_app
 from misfeed.report import RunResult, markdown_report, summarise
 from misfeed.store import CanonMismatch, CassetteMiss, Entry, Player, Store, Trace
+from misfeed.streaming import sse_events
+from misfeed.toolfault import Corruption, ToolFaultPlan, ToolInjector
 from misfeed.verdict import Outcome, RunFacts, classify
 
 __version__ = "0.0.1"
@@ -22,6 +24,7 @@ __all__ = [
     "BudgetExceeded",
     "CanonMismatch",
     "CassetteMiss",
+    "Corruption",
     "Engine",
     "Entry",
     "FaultSpec",
@@ -33,6 +36,8 @@ __all__ = [
     "RunFacts",
     "RunResult",
     "Store",
+    "ToolFaultPlan",
+    "ToolInjector",
     "Trace",
     "__version__",
     "apply_fault",
@@ -41,5 +46,6 @@ __all__ = [
     "inject_into_request",
     "markdown_report",
     "request_key",
+    "sse_events",
     "summarise",
 ]

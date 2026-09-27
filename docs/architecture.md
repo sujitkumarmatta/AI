@@ -24,6 +24,8 @@ applies any more. The cassette tree is the resolution.
 | `misfeed.canon` | reduce a chat request to the fields that determine the completion; normalise volatile content; hash |
 | `misfeed.store` | content-addressed blobs; trunk/branch trace tree; strict replay |
 | `misfeed.faults` | the nine fault classes and how one is applied to a request |
+| `misfeed.toolfault` | the same faults applied where the agent's own code receives a tool result |
+| `misfeed.streaming` | rebuilding SSE framing from a recorded response |
 | `misfeed.proxy` | the OpenAI-compatible endpoint; record, replay and inject modes |
 | `misfeed.verdict` | eight outcomes from three deterministic facts |
 | `misfeed.report` | aggregation, exclusion rules, markdown rendering |
@@ -74,9 +76,23 @@ generates schemas from signatures while the other sends hand-written ones. Porta
 holds between clients issuing the same logical request, which is what the
 bidirectional test demonstrates.
 
-The interception point is also the boundary of what it can see: the agent's own
+### The two injection points
+
+The interception point above is the boundary of what the proxy can see: the agent's own
 retry wrapper and validation code run against the *real* tool result and are never
-exercised. An SDK-level injector would cover that half. It does not exist.
+exercised. `misfeed.toolfault` covers that half, as a separate opt-in mechanism: one call inserted
+at the agent's tool dispatch, so the corrupted value is what the agent's code receives.
+It cannot be done from outside the call without patching, and patching a user's tools to
+measure their reliability would undercut the point.
+
+Keeping both buys something neither has alone. A fault applied in flight lives in the
+conversation history and is therefore permanent; a tool-side fault can be transient,
+letting a retry succeed. So the pair can distinguish "the agent's retry helps" from "the
+failure does not clear" -- the same agent, the same fault, three placements, three
+different answers, which `tests/test_toolfault_integration.py` pins.
+
+A tool-side corruption still reaches the model, so the proxy records the divergent
+continuation as a branch exactly as it would otherwise: replayability is unaffected.
 
 ## The cassette tree
 
@@ -211,7 +227,6 @@ exists to expose.
 
 ## What is not here
 
-- No SDK-level injection, so the agent's own error handling is untested.
 - No MCP transport interception; faults reach tools only through the model-facing
   boundary.
 - No database or server. Cassettes are files; the study is a script. Nothing is

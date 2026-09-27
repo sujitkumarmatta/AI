@@ -92,7 +92,7 @@ plain-SDK one. That is correct, not a defect: those are different requests.
 
 ```bash
 make setup    # uv sync
-make test     # 327 tests, no network, no API keys
+make test     # 351 tests, no network, no API keys
 make demo     # narrated walkthrough of one experiment, from committed cassettes
 make eval     # verify every number below reproduces, with 0 live calls
 ```
@@ -172,6 +172,35 @@ literature rather than chosen because it was easy to implement.
 `injected_instruction` is here because indirect prompt injection *is* a
 tool-result fault. It needs no separate apparatus, so the same machinery measures
 that security property.
+
+## Two injection points
+
+The proxy corrupts the tool-result message **in flight**, which needs nothing from
+your agent but has a boundary: your retry wrapper and validation code see the real
+payload. `misfeed.toolfault` corrupts the result **where your code receives it**, which
+takes one line at your tool dispatch:
+
+```python
+injector = ToolInjector(ToolFaultPlan(FaultSpec(fault="empty_success")))
+result = injector.apply(tool_name=name, result=my_tool(**args))
+```
+
+Keeping both buys something neither has alone. A fault applied in flight lives in the
+conversation history and is **permanent by construction**. A tool-side fault can be
+**transient**, so a retry gets real data. Same agent, same fault, three placements:
+
+| where the fault lands | the retry wrapper | the answer |
+| --- | --- | --- |
+| in flight | never fires — it saw real data | wrong |
+| at the tool, transient | fires, retry succeeds | **correct** |
+| at the tool, persistent | fires, retry corrupted too | wrong |
+
+That middle row is the question "does this agent's retry actually help?", and the
+wire-level injector cannot ask it. Pinned in
+[`tests/test_toolfault_integration.py`](tests/test_toolfault_integration.py).
+
+Tool-side corruptions still reach the model, so the proxy records the divergence as a
+branch as usual — replayability is unaffected.
 
 ## Outcomes
 
@@ -284,10 +313,12 @@ both, so the effect of that paragraph gets a number instead of an assertion.
 
 ## Limitations
 
-- **This measures the model's reasoning about a degraded tool result, not the
-  agent's own error handling.** Faults are applied in flight, so the agent's retry
-  wrappers and validation code are never exercised. An SDK-level injector would
-  cover that half; it does not exist yet.
+- **The default injection point does not exercise the agent's own error handling.**
+  Faults applied in flight reach the model but not the agent's retry wrapper, which
+  sees the genuine payload. `misfeed.toolfault` covers that half as an opt-in second
+  mechanism — one call at your tool dispatch — but it cannot be done without your
+  cooperation, because corrupting what a function returns to its caller requires
+  being inside that call.
 - **The published numbers come from a scripted stand-in**, and say nothing about
   real models. Every such report is stamped `synthetic: true`.
 - **Tasks are synthetic and deterministic by necessity.** That buys honest grading
