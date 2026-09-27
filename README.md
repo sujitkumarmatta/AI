@@ -65,7 +65,7 @@ out below.
 
 ```bash
 make setup    # uv sync
-make test     # 247 tests, no network, no API keys
+make test     # 264 tests, no network, no API keys
 make demo     # narrated walkthrough of one experiment, from committed cassettes
 make eval     # verify every number below reproduces, with 0 live calls
 ```
@@ -74,6 +74,46 @@ make eval     # verify every number below reproduces, with 0 live calls
 from, the clean run that gates it, what the tool really returned versus what the
 model was shown, what the agent then asserted, and the same fault against an agent
 that validates its tool results.
+
+## Using it on your own agent
+
+Nothing above requires your agent to know misfeed exists. Run the proxy, point your
+agent's OpenAI base URL at it, and run your agent normally.
+
+```bash
+# 1. record a clean run of your agent
+export MISFEED_UPSTREAM_API_KEY=...
+misfeed --store cassettes serve --mode record --trace mytrunk \
+        --upstream https://your-endpoint/v1
+
+# in another shell, with OPENAI_BASE_URL=http://127.0.0.1:8756/v1
+python your_agent.py
+
+# 2. re-run it with the tool result at step 2 emptied
+misfeed --store cassettes serve --mode inject --trace mybranch \
+        --parent mytrunk --fault empty_success --at-step 2 \
+        --upstream https://your-endpoint/v1
+
+# 3. read what the model actually saw
+misfeed --store cassettes traces
+misfeed --store cassettes show mybranch
+```
+
+`misfeed show` prints each step as the model received it, so the corruption is
+visible rather than inferred:
+
+```
+--- step 2 ---------------------------------------------------------
+  assistant: -> list_orders({"customer_id": 1, "status": "shipped"})
+       tool: {"orders": [{"order_id": 101, "amount_cents": 1250, ...}]}
+      MODEL: Summed the shipped order amounts.
+             ANSWER: 1250
+```
+
+The tool returned three orders. The model was shown one. It answered confidently.
+
+`misfeed faults` and `misfeed outcomes` list the taxonomies. Replay mode contacts
+nothing, so `serve --mode replay` needs no key at all.
 
 ## Fault taxonomy
 
@@ -244,6 +284,43 @@ both, so the effect of that paragraph gets a number instead of an assertion.
 - **Results and provenance are separate blocks in the report.** `results` must be
   byte-identical on re-run; `provenance` holds what legitimately varies, since a
   first run makes live calls and a replay makes none.
+
+## Documentation
+
+- [Architecture](docs/architecture.md) — components, the cassette tree, request
+  identity, failure modes, and what is deliberately absent.
+- [AI design](docs/ai-design.md) — each AI component, and the places a model is
+  deliberately *not* used (grading, fault generation, the surfaced signal).
+- [Evaluation](docs/evaluation.md) — methodology, exclusion rules, results, and seven
+  threats to validity in order of severity.
+- [Decision records](docs/adr/) — the four decisions that had real alternatives.
+
+## Contributing
+
+Issues and pull requests are welcome. `make check` is what CI runs (lint, types,
+tests, and the reproducibility gate); it must pass. Two conventions specific to this
+project:
+
+- **Every number in the README or the docs must trace to a committed artifact.** If
+  it is not measured, write "not yet measured".
+- **A new fault class needs a citation**, not just an implementation: a production
+  report or a paper describing the failure it represents. The taxonomy is grounded on
+  purpose.
+
+## Security
+
+Faults are applied only to traffic the proxy is explicitly pointed at, and replay
+mode makes no outbound connection at all. Two things to know:
+
+- **Cassettes contain the prompts they were recorded from.** Record over synthetic
+  data, or pass `store_requests=False`, before committing anything.
+- **Pass upstream keys via `MISFEED_UPSTREAM_API_KEY`**, not `--api-key`, which puts
+  the key in your shell history and the process table. No credential is ever written
+  to a cassette; there is a test asserting it.
+
+`injected_instruction` deliberately places attacker-style text in tool output. It
+measures whether the data/instruction boundary holds at all — it is not a red-teaming
+suite, and [garak](https://github.com/NVIDIA/garak) already does that job well.
 
 ## Licence
 
