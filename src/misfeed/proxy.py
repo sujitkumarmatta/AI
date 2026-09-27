@@ -31,7 +31,7 @@ fails loudly instead of quietly running up usage.
 from __future__ import annotations
 
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -106,6 +106,9 @@ class Observation:
     latency_ms: float
     usage: dict[str, Any] | None = None
     fault: dict[str, Any] | None = None
+    # Whether the corrupted tool result was present in this request's messages.
+    # An agent that prunes its history can carry a fault and then drop it.
+    fault_present: bool = False
 
     def to_json(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -118,15 +121,29 @@ class Observation:
             out["usage"] = self.usage
         if self.fault is not None:
             out["fault"] = self.fault
+        if self.fault_present:
+            out["fault_present"] = True
         return out
 
 
 class Engine:
     """Mode logic, independent of the HTTP layer so it can be tested directly."""
 
-    def __init__(self, config: ProxyConfig, client: httpx2.AsyncClient | None = None) -> None:
+    def __init__(
+        self,
+        config: ProxyConfig,
+        client: httpx2.AsyncClient | None = None,
+        client_factory: Callable[[], httpx2.AsyncClient] | None = None,
+    ) -> None:
+        """`client_factory` is called on the first live request, and only then.
+
+        A run that turns out to be fully served from cassettes therefore never
+        constructs an upstream connection at all, which makes "a replay contacts
+        nothing" a structural property rather than an incidental one.
+        """
         self.config = config
         self.client = client
+        self._client_factory = client_factory
         self.step = 0
         self.live_calls = 0
         self.observations: list[Observation] = []
@@ -135,6 +152,13 @@ class Engine:
         # run is still on the trunk's path and may be served from it; afterwards
         # the trunk is a different conversation and must not be matched.
         self.diverged = False
+        # The exact corrupted payload, so later requests can be checked for it.
+        self._injected_content: str | None = None
+        # tool_call_id -> corrupted content. A real broken tool result stays in
+        # the conversation for good, but the agent keeps re-sending the original
+        # it actually received, so the corruption has to be re-applied to every
+        # later request or it silently evaporates after one step.
+        self._persistent: dict[str, str] = {}
         self._new_entries: list[Entry] = []
         self._branch_existed = (
             config.mode is Mode.INJECT
@@ -161,6 +185,20 @@ class Engine:
             if config.mode is Mode.REPLAY:
                 raise
             return Player(store, [])
+
+    @property
+    def fault_in_final_context(self) -> bool:
+        """Whether the corrupted result was still in context on the last request.
+
+        This is the denominator condition for the primary metric. Corrupting a
+        tool result the agent never carried into the request that produced its
+        answer tested nothing: counting it as a pass would flatter the system and
+        counting it as a failure would slander it, so such runs are excluded and
+        reported separately.
+        """
+        if self._injected_content is None or not self.observations:
+            return False
+        return self.observations[-1].fault_present
 
     @property
     def recorded_a_divergence(self) -> bool:
@@ -193,8 +231,16 @@ class Engine:
             self.injection = fault_detail
             if outcome.applied:
                 self.diverged = True
+                corrupted = body["messages"][outcome.detail["message_index"]]["content"]
+                self._injected_content = corrupted
+                call_id = outcome.detail.get("tool_call_id")
+                if isinstance(call_id, str):
+                    self._persistent[call_id] = corrupted
+        elif self._persistent:
+            body = self._reapply_persistent(body)
 
         key = request_key(body, config.rules)
+        fault_present = self._contains_injected(body)
 
         # Once a fresh branch has diverged, the trunk describes a different
         # conversation. Serving from it would leave the branch missing entries and
@@ -217,6 +263,7 @@ class Engine:
                     latency_ms=(time.perf_counter() - started) * 1000,
                     usage=response.get("usage") if isinstance(response, dict) else None,
                     fault=fault_detail,
+                    fault_present=fault_present,
                 )
             )
             return dict(response)
@@ -231,9 +278,41 @@ class Engine:
                 latency_ms=(time.perf_counter() - started) * 1000,
                 usage=response.get("usage"),
                 fault=fault_detail,
+                fault_present=fault_present,
             )
         )
         return response
+
+    def _reapply_persistent(self, body: dict[str, Any]) -> dict[str, Any]:
+        """Re-corrupt tool results the fault already hit, on every later request."""
+        messages = body.get("messages")
+        if not isinstance(messages, list):
+            return body
+        rewritten = list(messages)
+        changed = False
+        for index, message in enumerate(rewritten):
+            if not isinstance(message, dict) or message.get("role") != "tool":
+                continue
+            call_id = message.get("tool_call_id")
+            if isinstance(call_id, str) and call_id in self._persistent:
+                replacement = self._persistent[call_id]
+                if message.get("content") != replacement:
+                    rewritten[index] = {**message, "content": replacement}
+                    changed = True
+        return {**body, "messages": rewritten} if changed else body
+
+    def _contains_injected(self, body: dict[str, Any]) -> bool:
+        if self._injected_content is None:
+            return False
+        messages = body.get("messages")
+        if not isinstance(messages, list):
+            return False
+        return any(
+            isinstance(message, dict)
+            and message.get("role") == "tool"
+            and message.get("content") == self._injected_content
+            for message in messages
+        )
 
     async def _call_upstream(self, body: dict[str, Any]) -> dict[str, Any]:
         config = self.config
@@ -242,6 +321,8 @@ class Engine:
                 f"live request cap of {config.max_live_requests} reached; "
                 "raise max_live_requests to continue recording"
             )
+        if self.client is None and self._client_factory is not None:
+            self.client = self._client_factory()
         if self.client is None:
             raise RuntimeError("no upstream client configured")
         self.live_calls += 1
@@ -310,32 +391,40 @@ class Engine:
         return trace
 
 
-def create_app(config: ProxyConfig, client: httpx2.AsyncClient | None = None) -> Starlette:
+def create_app(
+    config: ProxyConfig,
+    client: httpx2.AsyncClient | None = None,
+    client_factory: Callable[[], httpx2.AsyncClient] | None = None,
+) -> Starlette:
     """An ASGI app serving the OpenAI-compatible surface for one run.
 
-    `client` overrides the upstream client the app would otherwise build, so a
-    caller can supply a pre-configured or mock transport.
+    The engine is built here rather than in the lifespan, and exposed as
+    `app.state.engine`. That means a bad trace id fails at construction instead of
+    at first request, and an in-process caller driving the app over an ASGI
+    transport (which runs no lifespan) still gets a working engine and can flush
+    it itself. Under a real server the lifespan flushes and closes on shutdown.
+
+    `client` overrides the upstream client, so a caller can supply a mock
+    transport. `client_factory` defers construction until a live call is actually
+    needed, so a run served entirely from cassettes opens nothing.
     """
-    state: dict[str, Any] = {}
+    owns_client = client is None
+    if client is None and client_factory is None and config.mode is not Mode.REPLAY:
+        base_url = config.upstream_base_url or ""
+        client_factory = lambda: httpx2.AsyncClient(base_url=base_url)  # noqa: E731
+    engine = Engine(config, client, client_factory)
 
     @asynccontextmanager
     async def lifespan(_: Starlette) -> AsyncIterator[None]:
-        owns_client = client is None
-        upstream = client
-        if upstream is None and config.mode is not Mode.REPLAY:
-            upstream = httpx2.AsyncClient(base_url=config.upstream_base_url or "")
-        engine = Engine(config, upstream)
-        state["engine"] = engine
         try:
             yield
         finally:
             # Flush before closing so an interrupted recording keeps what it got.
             engine.flush()
-            if upstream is not None and owns_client:
-                await upstream.aclose()
+            if engine.client is not None and owns_client:
+                await engine.client.aclose()
 
     async def completions(request: Request) -> JSONResponse:
-        engine: Engine = state["engine"]
         try:
             body = await request.json()
         except ValueError:
@@ -367,20 +456,19 @@ def create_app(config: ProxyConfig, client: httpx2.AsyncClient | None = None) ->
             return JSONResponse(
                 {"error": {"message": str(over), "type": "budget_exceeded"}}, status_code=429
             )
-        except httpx2.HTTPStatusError as upstream:
+        except httpx2.HTTPStatusError as upstream_error:
             return JSONResponse(
                 {
                     "error": {
-                        "message": f"upstream returned {upstream.response.status_code}",
+                        "message": f"upstream returned {upstream_error.response.status_code}",
                         "type": "upstream_error",
-                        "body": upstream.response.text[:2000],
+                        "body": upstream_error.response.text[:2000],
                     }
                 },
                 status_code=502,
             )
 
     async def stats(_: Request) -> JSONResponse:
-        engine: Engine = state["engine"]
         return JSONResponse(
             {
                 "mode": config.mode.value,
@@ -388,15 +476,19 @@ def create_app(config: ProxyConfig, client: httpx2.AsyncClient | None = None) ->
                 "steps": len(engine.observations),
                 "live_calls": engine.live_calls,
                 "cassette_remaining": engine.cassette_remaining,
+                "diverged": engine.recorded_a_divergence,
+                "fault_in_final_context": engine.fault_in_final_context,
                 "injection": engine.injection,
                 "observations": [o.to_json() for o in engine.observations],
             }
         )
 
-    return Starlette(
+    app = Starlette(
         routes=[
             Route("/v1/chat/completions", completions, methods=["POST"]),
             Route("/__misfeed/stats", stats, methods=["GET"]),
         ],
         lifespan=lifespan,
     )
+    app.state.engine = engine
+    return app

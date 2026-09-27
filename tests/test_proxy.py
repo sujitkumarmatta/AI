@@ -508,6 +508,130 @@ class TestInject:
         assert replay.live_calls == 0
 
 
+class TestFaultPersistence:
+    async def test_corruption_persists_on_every_later_request(self, store: Store) -> None:
+        # The agent keeps re-sending the tool result it actually received, so a
+        # fault applied to one request would evaporate on the next unless it is
+        # re-applied. A real broken tool result stays broken for the whole run.
+        two_hop = [
+            tool_call_reply("find_customer", "{}", "c1"),
+            tool_call_reply("list_orders", "{}", "c2"),
+            text_reply("done"),
+        ]
+        recorder = Engine(
+            ProxyConfig(
+                mode=Mode.RECORD, store=store, trace_id="t1", upstream_base_url="http://upstream/v1"
+            ),
+            FakeUpstream(list(two_hop)).client(),
+        )
+        first = {"model": "m", "messages": [{"role": "user", "content": "q"}]}
+        second = with_tool_result('{"customer_id": 1}', tool="find_customer")
+        third = {
+            "model": "m",
+            "messages": [
+                *second["messages"],
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {
+                            "id": "c2",
+                            "type": "function",
+                            "function": {"name": "list_orders", "arguments": "{}"},
+                        }
+                    ],
+                },
+                {"role": "tool", "tool_call_id": "c2", "content": '{"orders": []}'},
+            ],
+        }
+        for body in (first, second, third):
+            await recorder.handle(body)
+        recorder.flush()
+
+        upstream = FakeUpstream([text_reply("a"), text_reply("b")])
+        engine = Engine(
+            ProxyConfig(
+                mode=Mode.INJECT,
+                store=store,
+                trace_id="b1",
+                parent="t1",
+                fault=FaultSpec(fault="empty_success"),
+                fault_at_step=1,
+                upstream_base_url="http://upstream/v1",
+            ),
+            upstream.client(),
+        )
+        await engine.handle(first)
+        await engine.handle(second)  # fault applies to the find_customer result
+        await engine.handle(third)  # the agent re-sends the original content
+
+        assert len(upstream.seen) == 2
+        # Corrupted at the injection step...
+        assert upstream.seen[0]["messages"][2]["content"] == ""
+        # ...and still corrupted one step later, where the agent sent the original.
+        carried = [
+            m
+            for m in upstream.seen[1]["messages"]
+            if m.get("role") == "tool" and m.get("tool_call_id") == "c1"
+        ]
+        assert carried and carried[0]["content"] == ""
+        assert engine.fault_in_final_context is True
+
+    async def test_untouched_tool_results_are_left_alone(self, store: Store) -> None:
+        two_hop = [tool_call_reply("find_customer", "{}", "c1"), text_reply("done")]
+        recorder = Engine(
+            ProxyConfig(
+                mode=Mode.RECORD, store=store, trace_id="t1", upstream_base_url="http://upstream/v1"
+            ),
+            FakeUpstream(list(two_hop)).client(),
+        )
+        first = {"model": "m", "messages": [{"role": "user", "content": "q"}]}
+        second = with_tool_result('{"customer_id": 1}', tool="find_customer")
+        await recorder.handle(first)
+        await recorder.handle(second)
+        recorder.flush()
+
+        upstream = FakeUpstream([text_reply("a"), text_reply("b")])
+        engine = Engine(
+            ProxyConfig(
+                mode=Mode.INJECT,
+                store=store,
+                trace_id="b1",
+                parent="t1",
+                fault=FaultSpec(fault="empty_success"),
+                fault_at_step=1,
+                upstream_base_url="http://upstream/v1",
+            ),
+            upstream.client(),
+        )
+        await engine.handle(first)
+        await engine.handle(second)
+        third = {
+            "model": "m",
+            "messages": [
+                *second["messages"],
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {
+                            "id": "c9",
+                            "type": "function",
+                            "function": {"name": "other", "arguments": "{}"},
+                        }
+                    ],
+                },
+                {"role": "tool", "tool_call_id": "c9", "content": "untouched payload"},
+            ],
+        }
+        await engine.handle(third)
+        later = {
+            m.get("tool_call_id"): m["content"]
+            for m in upstream.seen[1]["messages"]
+            if m.get("role") == "tool"
+        }
+        assert later["c1"] == ""  # the faulted one stays faulted
+        assert later["c9"] == "untouched payload"  # a different tool is not touched
+
+
 class TestSecretHygiene:
     async def test_no_credential_reaches_a_cassette(self, store: Store) -> None:
         # NFR: no auth header or key is ever written to a cassette.

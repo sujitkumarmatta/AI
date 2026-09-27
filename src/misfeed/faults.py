@@ -417,6 +417,9 @@ def inject_into_request(body: dict[str, Any], spec: FaultSpec) -> InjectionOutco
     detail: dict[str, Any] = {
         "fault": spec.fault,
         "message_index": target,
+        # Needed so the corruption can be re-applied to the same tool result on
+        # every later request -- a broken tool result stays broken.
+        "tool_call_id": messages[target].get("tool_call_id"),
         "tool_name": _tool_name_for(messages, target),
         **result.detail,
     }
