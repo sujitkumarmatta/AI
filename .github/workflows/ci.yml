@@ -31,3 +31,6 @@ jobs:
 
       - name: committed results reproduce from committed cassettes
         run: uv run python -m evals.study --check
+
+      - name: every number in the README traces to an artifact
+        run: uv run python scripts/check_readme_claims.py

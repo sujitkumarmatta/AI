@@ -17,6 +17,7 @@ types:        ## strict type checking
 
 eval:         ## verify the committed report reproduces from committed cassettes
 	uv run python -m evals.study --check
+	uv run python scripts/check_readme_claims.py
 
 demo:         ## narrated walkthrough of one fault experiment, offline
 	uv run python -m evals.demo
