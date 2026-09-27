@@ -38,16 +38,22 @@ packages = ["src/misfeed"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+# `evals` is the study driven by the harness, not part of the shipped package, so
+# it is importable from the repo root rather than installed into the wheel.
+pythonpath = ["."]
 filterwarnings = ["error"]
 
 [tool.ruff]
 line-length = 100
-src = ["src", "tests"]
+src = ["src", "tests", "."]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["misfeed", "evals"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["src/misfeed"]
+files = ["src/misfeed", "evals", "tests"]
