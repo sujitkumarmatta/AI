@@ -8,25 +8,26 @@
     },
     {
       "blob": "8dabf8e75ef26879f8c6221c0d0d1fd026f67be73429d62f844e04715be39271",
-      "request": "7375c7c9394ca8cf064204f8e4e5043183d421c2edeba87ea107fa40a1e20fa1",
-      "request_key": "7375c7c9394ca8cf064204f8e4e5043183d421c2edeba87ea107fa40a1e20fa1",
+      "request": "6e5990d90b44c605144ccb3b9315b33338bd38328d98d9e8b45b1cf7e6c8fbac",
+      "request_key": "6e5990d90b44c605144ccb3b9315b33338bd38328d98d9e8b45b1cf7e6c8fbac",
       "step": 1
     },
     {
       "blob": "12e4d19e32b2316e1be94f7b4401d06d0fffe175e566a26056aeb3b9e82be518",
-      "request": "9a91eaf3304beb1a875c091f2d06a46c2bb8ffcabe32717c891196ceca7edd0f",
-      "request_key": "9a91eaf3304beb1a875c091f2d06a46c2bb8ffcabe32717c891196ceca7edd0f",
+      "request": "8133258b0c1147d7dcb3ca78076e12ed35e2bd123ff8f4d9d0f605ae3fb0a855",
+      "request_key": "8133258b0c1147d7dcb3ca78076e12ed35e2bd123ff8f4d9d0f605ae3fb0a855",
       "step": 2
     }
   ],
   "id": "trunk--stub-naive--baseline--T1_shipped_total",
   "kind": "trunk",
   "meta": {
+    "canon": "517b20dbe106",
     "live_calls": 3,
     "model": "stub/naive",
     "steps": [
       {
-        "latency_ms": 1.788,
+        "latency_ms": 2.389,
         "request_key": "2a4f28063c294bc14ffd15f8ae2aa91207436476dd73cfb33e136a948933e60c",
         "source": "live",
         "step": 0,
@@ -37,8 +38,8 @@
         }
       },
       {
-        "latency_ms": 1.365,
-        "request_key": "7375c7c9394ca8cf064204f8e4e5043183d421c2edeba87ea107fa40a1e20fa1",
+        "latency_ms": 1.645,
+        "request_key": "6e5990d90b44c605144ccb3b9315b33338bd38328d98d9e8b45b1cf7e6c8fbac",
         "source": "live",
         "step": 1,
         "usage": {
@@ -48,8 +49,8 @@
         }
       },
       {
-        "latency_ms": 1.783,
-        "request_key": "9a91eaf3304beb1a875c091f2d06a46c2bb8ffcabe32717c891196ceca7edd0f",
+        "latency_ms": 1.887,
+        "request_key": "8133258b0c1147d7dcb3ca78076e12ed35e2bd123ff8f4d9d0f605ae3fb0a855",
         "source": "live",
         "step": 2,
         "usage": {

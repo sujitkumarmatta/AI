@@ -2,14 +2,14 @@
   "entries": [
     {
       "blob": "b7b9a569def8c29e8c565361d8c200916050424f436cbc87688c49a807ecae35",
-      "request": "ed73301e83fde3b9d7892be15096a493aedf526200b67856c23d4ee06fdb60b5",
-      "request_key": "ed73301e83fde3b9d7892be15096a493aedf526200b67856c23d4ee06fdb60b5",
+      "request": "3f57de25665d90a41c38ad47c26d3abb4e34926b4219e7d8d7542c24fde072e8",
+      "request_key": "3f57de25665d90a41c38ad47c26d3abb4e34926b4219e7d8d7542c24fde072e8",
       "step": 1
     },
     {
       "blob": "004c6b756ca1a29eae71e6e293f765ad4af5d235a76a937d3afd2d62c3fefc35",
-      "request": "17b4376b0297c3fcd0a7be0c21585fa0cacd074a9165fc38ff8afda797231feb",
-      "request_key": "17b4376b0297c3fcd0a7be0c21585fa0cacd074a9165fc38ff8afda797231feb",
+      "request": "aa02cbe0b315b152a6974994bef39eb9cccbf2292662aac238f7799bdb37db76",
+      "request_key": "aa02cbe0b315b152a6974994bef39eb9cccbf2292662aac238f7799bdb37db76",
       "step": 2
     }
   ],
@@ -36,13 +36,14 @@
   "id": "branch--stub-careful--baseline--T1_shipped_total--s1--unit_shift",
   "kind": "branch",
   "meta": {
+    "canon": "517b20dbe106",
     "fault": "unit_shift",
     "live_calls": 2,
     "model": "stub/careful",
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.23,
+        "latency_ms": 0.241,
         "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
         "source": "cassette",
         "step": 0,
@@ -69,8 +70,8 @@
           "tool_name": "find_customer"
         },
         "fault_present": true,
-        "latency_ms": 0.972,
-        "request_key": "ed73301e83fde3b9d7892be15096a493aedf526200b67856c23d4ee06fdb60b5",
+        "latency_ms": 1.362,
+        "request_key": "3f57de25665d90a41c38ad47c26d3abb4e34926b4219e7d8d7542c24fde072e8",
         "source": "live",
         "step": 1,
         "usage": {
@@ -81,8 +82,8 @@
       },
       {
         "fault_present": true,
-        "latency_ms": 0.963,
-        "request_key": "17b4376b0297c3fcd0a7be0c21585fa0cacd074a9165fc38ff8afda797231feb",
+        "latency_ms": 0.827,
+        "request_key": "aa02cbe0b315b152a6974994bef39eb9cccbf2292662aac238f7799bdb37db76",
         "source": "live",
         "step": 2,
         "usage": {

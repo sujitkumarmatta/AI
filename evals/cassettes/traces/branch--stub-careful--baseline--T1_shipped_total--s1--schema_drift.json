@@ -2,8 +2,8 @@
   "entries": [
     {
       "blob": "2e93e73dd09f0091a91559393026b833a8498a557db183448f5da7cb8dfd305c",
-      "request": "333248f6c789a18af18338b90bfbe531f3af6ba6cf70984a3912c5425b5ee7be",
-      "request_key": "333248f6c789a18af18338b90bfbe531f3af6ba6cf70984a3912c5425b5ee7be",
+      "request": "f854664469b5014ad21316b09ec7714726322a82ccaec12743007dff599ad69c",
+      "request_key": "f854664469b5014ad21316b09ec7714726322a82ccaec12743007dff599ad69c",
       "step": 1
     }
   ],
@@ -25,13 +25,14 @@
   "id": "branch--stub-careful--baseline--T1_shipped_total--s1--schema_drift",
   "kind": "branch",
   "meta": {
+    "canon": "517b20dbe106",
     "fault": "schema_drift",
     "live_calls": 1,
     "model": "stub/careful",
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.278,
+        "latency_ms": 0.285,
         "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
         "source": "cassette",
         "step": 0,
@@ -53,8 +54,8 @@
           "tool_name": "find_customer"
         },
         "fault_present": true,
-        "latency_ms": 1.098,
-        "request_key": "333248f6c789a18af18338b90bfbe531f3af6ba6cf70984a3912c5425b5ee7be",
+        "latency_ms": 1.313,
+        "request_key": "f854664469b5014ad21316b09ec7714726322a82ccaec12743007dff599ad69c",
         "source": "live",
         "step": 1,
         "usage": {

@@ -16,6 +16,7 @@ import argparse
 import asyncio
 import difflib
 import json
+import sys
 import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass, replace
@@ -31,7 +32,7 @@ from evals.world import World
 from misfeed.faults import FAULT_IDS, FaultSpec
 from misfeed.proxy import Engine, Mode, ProxyConfig, create_app
 from misfeed.report import RunResult, markdown_report, summarise
-from misfeed.store import Store
+from misfeed.store import CanonMismatch, Store
 from misfeed.verdict import RunFacts, answer_matches, classify, extract_answer, surfaced_problem
 
 __all__ = ["StudyConfig", "run_study"]
@@ -364,10 +365,13 @@ def main(argv: list[str] | None = None) -> int:
         model=args.model,
         max_live_requests=args.max_live_requests,
     )
-    if args.check:
-        return _check(config)
-
-    summary = asyncio.run(run_study(config))
+    try:
+        if args.check:
+            return _check(config)
+        summary = asyncio.run(run_study(config))
+    except CanonMismatch as stale:
+        print(f"error: {stale}", file=sys.stderr)
+        return 1
     print(markdown_report(summary))
     print(f"report: {args.report}")
     return 0

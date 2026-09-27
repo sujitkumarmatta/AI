@@ -11,7 +11,7 @@ from misfeed.canon import DEFAULT_RULES, NormalizeRule, request_key
 from misfeed.faults import FAULT_IDS, FaultSpec, apply_fault, inject_into_request
 from misfeed.proxy import BudgetExceeded, Engine, Mode, ProxyConfig, create_app
 from misfeed.report import RunResult, markdown_report, summarise
-from misfeed.store import CassetteMiss, Entry, Player, Store, Trace
+from misfeed.store import CanonMismatch, CassetteMiss, Entry, Player, Store, Trace
 from misfeed.verdict import Outcome, RunFacts, classify
 
 __version__ = "0.0.1"
@@ -20,6 +20,7 @@ __all__ = [
     "DEFAULT_RULES",
     "FAULT_IDS",
     "BudgetExceeded",
+    "CanonMismatch",
     "CassetteMiss",
     "Engine",
     "Entry",

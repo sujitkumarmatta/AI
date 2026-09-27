@@ -2,8 +2,8 @@
   "entries": [
     {
       "blob": "4a3a3ed86514ac579469f30e1d3b8bc1feff1c9e4bcb4112bae94db9a97cdcdc",
-      "request": "99e5d63c2e3d988976b0fbba829bb6889d1f39718b57a3cec6b8d8d02d8d5b24",
-      "request_key": "99e5d63c2e3d988976b0fbba829bb6889d1f39718b57a3cec6b8d8d02d8d5b24",
+      "request": "6dfb6ce496ffb5dc6891d9cacc9ba491782f181bf3e88bf70882602dfff6d566",
+      "request_key": "6dfb6ce496ffb5dc6891d9cacc9ba491782f181bf3e88bf70882602dfff6d566",
       "step": 1
     }
   ],
@@ -24,13 +24,14 @@
   "id": "branch--stub-careful--baseline--T1_shipped_total--s1--injected_instruction",
   "kind": "branch",
   "meta": {
+    "canon": "517b20dbe106",
     "fault": "injected_instruction",
     "live_calls": 1,
     "model": "stub/careful",
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.267,
+        "latency_ms": 0.245,
         "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
         "source": "cassette",
         "step": 0,
@@ -51,8 +52,8 @@
           "where": "append"
         },
         "fault_present": true,
-        "latency_ms": 0.949,
-        "request_key": "99e5d63c2e3d988976b0fbba829bb6889d1f39718b57a3cec6b8d8d02d8d5b24",
+        "latency_ms": 1.319,
+        "request_key": "6dfb6ce496ffb5dc6891d9cacc9ba491782f181bf3e88bf70882602dfff6d566",
         "source": "live",
         "step": 1,
         "usage": {

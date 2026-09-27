@@ -55,10 +55,15 @@ agent ──┬─ calls its own tools locally (real results) ──────
 ```
 
 Because the interception point is the HTTP API rather than any SDK, there is nothing
-framework-specific in the mechanism: any client speaking OpenAI chat-completions,
-in any language, needs only its base URL redirected. That said, it has been exercised
-against this repository's own agent loop and not yet against a third-party framework,
-so treat wider compatibility as expected rather than demonstrated.
+framework-specific in the mechanism: any client speaking OpenAI chat-completions, in
+any language, needs only its base URL redirected.
+
+This is covered by tests rather than assumed. `tests/test_compat_openai_sdk.py` drives
+an unmodified `openai.AsyncOpenAI` over a real socket against a uvicorn-served proxy,
+records and replays, injects a fault, and checks cassette portability in both
+directions. It is also the only test that exercises the real server path — uvicorn,
+sockets, and the lifespan that flushes a recording on shutdown; every other test drives
+the ASGI app in-process and skips all three.
 
 The interception point is also the boundary of what it can see: the agent's own
 retry wrapper and validation code run against the *real* tool result and are never
@@ -109,9 +114,29 @@ request. The cassette stores the logical response. Synthesising SSE on replay is
 therefore a later addition needing no cassette migration — but until it lands,
 `stream=true` is refused with a 400 rather than answered with a non-streaming body.
 
+**Explicit nulls.** Null-valued fields are dropped at every depth. A loop that appends
+a response message verbatim sends `"content": null` on an assistant tool-call message;
+the official SDK's `model_dump(exclude_none=True)` omits the field. Both mean "no
+content", and treating them as different requests made every cassette client-specific
+with nothing saying so. A compatibility test against a second, independently written
+client found it; no unit test would have.
+
 Also excluded: `user`, `metadata`, `store` — caller bookkeeping with no effect on the
 completion. `bool` is checked before the numeric branch, because `bool` subclasses
 `int` in Python and `parallel_tool_calls=True` must not collide with `=1`.
+
+### Scheme versioning
+
+Every trace is stamped with `fingerprint()` — a short hash of `KEY_FIELDS`, the
+normalisation rules and the structural rules. Loading a trace whose stamp differs
+raises `CanonMismatch` naming both values.
+
+This exists because it was needed. Normalising explicit nulls changed every stored
+key, and the symptom was "the cassettes are incomplete" plus a silent re-record of the
+whole study. Against a paid endpoint that is real money spent for no reason. The
+fingerprint is derived rather than hand-maintained, because a version integer someone
+has to remember to bump does not get bumped. `misfeed traces` marks stale traces
+rather than refusing to list them, since listing is how you discover one is stale.
 
 ## Modes
 

@@ -2,8 +2,8 @@
   "entries": [
     {
       "blob": "8b6da8ff8901b94fc219eecfbf406eeed1f3483ce49202823b03a59f91f33851",
-      "request": "28db55b0b503a45705b02913b3f485fa6e9e373c448a52b98bad02ce6fbf7615",
-      "request_key": "28db55b0b503a45705b02913b3f485fa6e9e373c448a52b98bad02ce6fbf7615",
+      "request": "85a77bde6697c063b98326d7aee459202aeb598e09ab4b5ebc1d4ed0d3cbb69c",
+      "request_key": "85a77bde6697c063b98326d7aee459202aeb598e09ab4b5ebc1d4ed0d3cbb69c",
       "step": 1
     }
   ],
@@ -24,13 +24,14 @@
   "id": "branch--stub-careful--baseline--T1_shipped_total--s1--empty_success",
   "kind": "branch",
   "meta": {
+    "canon": "517b20dbe106",
     "fault": "empty_success",
     "live_calls": 1,
     "model": "stub/careful",
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.334,
+        "latency_ms": 0.252,
         "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
         "source": "cassette",
         "step": 0,
@@ -51,8 +52,8 @@
           "was_bytes": 58
         },
         "fault_present": true,
-        "latency_ms": 0.942,
-        "request_key": "28db55b0b503a45705b02913b3f485fa6e9e373c448a52b98bad02ce6fbf7615",
+        "latency_ms": 1.152,
+        "request_key": "85a77bde6697c063b98326d7aee459202aeb598e09ab4b5ebc1d4ed0d3cbb69c",
         "source": "live",
         "step": 1,
         "usage": {

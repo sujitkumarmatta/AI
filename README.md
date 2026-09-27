@@ -61,15 +61,19 @@ shown the corrupted version. Nothing about the agent is patched or wrapped, so t
 works with any client that speaks the OpenAI chat-completions API, in any language
 — and it is also the main limitation, spelled out below.
 
-Verified so far against this repository's own agent loop only. The interception
-point is the HTTP API rather than any SDK, so there is nothing framework-specific in
-the mechanism, but "works with LangGraph" is not a claim I have earned yet.
+This is tested, not assumed. `tests/test_compat_openai_sdk.py` drives an unmodified
+`openai.AsyncOpenAI` client over a real socket against a uvicorn-served proxy: it
+records a run, replays it with zero live calls, and has a fault injected into it. It
+also checks **cassette portability in both directions** — a cassette recorded by this
+repository's own agent loop replays under the official SDK and vice versa.
+`examples/openai_sdk_agent.py` is the worked example, and its only misfeed-specific
+line is the `base_url`.
 
 ## Quickstart
 
 ```bash
 make setup    # uv sync
-make test     # 264 tests, no network, no API keys
+make test     # 286 tests, no network, no API keys
 make demo     # narrated walkthrough of one experiment, from committed cassettes
 make eval     # verify every number below reproduces, with 0 live calls
 ```
@@ -266,6 +270,13 @@ both, so the effect of that paragraph gets a number instead of an assertion.
 - **Exact-match replay is brittle** against agents that inject volatile content
   into prompts. Three normalisation rules cover timestamps, UUIDs and epoch
   millis; anything else misses loudly rather than quietly going live.
+- **Changing the canonicalisation scheme invalidates existing cassettes.** Every
+  trace is stamped with a fingerprint of the scheme, so a mismatch fails with an
+  explicit message rather than as a confusing wall of misses. Re-record, or check out
+  the revision that produced them.
+- **One proxy instance serves one run.** Replay consumes a per-key queue in recorded
+  order, so a second run through the same instance is reported as divergence rather
+  than served a free repeat. Parallel studies need separate instances.
 - **The `surfaced` signal is a keyword lexicon.** Its error against hand labels
   has not been measured yet, so treat it as indicative.
 - **The real-model recording path is not covered by tests**, because testing it
@@ -298,6 +309,8 @@ both, so the effect of that paragraph gets a number instead of an assertion.
 - [Evaluation](docs/evaluation.md) — methodology, exclusion rules, results, and seven
   threats to validity in order of severity.
 - [Decision records](docs/adr/) — the four decisions that had real alternatives.
+- [`examples/openai_sdk_agent.py`](examples/openai_sdk_agent.py) — a tool-calling
+  agent written against the official `openai` SDK, pointed at misfeed by one line.
 
 ## Contributing
 

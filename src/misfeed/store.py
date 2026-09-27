@@ -23,9 +23,28 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from misfeed.canon import canonical_json
+from misfeed.canon import canonical_json, fingerprint
 
-__all__ = ["CassetteMiss", "Entry", "Player", "Store", "Trace"]
+__all__ = ["CanonMismatch", "CassetteMiss", "Entry", "Player", "Store", "Trace"]
+
+
+class CanonMismatch(RuntimeError):
+    """A trace was recorded under a different canonicalisation scheme.
+
+    Raised instead of letting every request miss, which would look like an
+    incomplete recording and would silently re-record the whole study -- at cost, if
+    the upstream is a paid endpoint.
+    """
+
+    def __init__(self, trace_id: str, recorded: str, current: str) -> None:
+        super().__init__(
+            f"trace {trace_id!r} was recorded under canonicalisation {recorded!r}, "
+            f"but this build uses {current!r}. Its stored request keys cannot match. "
+            f"Re-record the trace, or check out the revision that produced it."
+        )
+        self.trace_id = trace_id
+        self.recorded = recorded
+        self.current = current
 
 
 class CassetteMiss(LookupError):
@@ -126,10 +145,12 @@ class Trace:
 class Store:
     """Blobs and traces on disk, under `root`."""
 
-    def __init__(self, root: Path) -> None:
-        self.root = root
-        self.blobs = root / "blobs"
-        self.traces = root / "traces"
+    def __init__(self, root: Path | str) -> None:
+        # Accepts a string because this is a public entry point and callers reach for
+        # one; silently producing a broken Store on `Store("cassettes")` is a trap.
+        self.root = Path(root)
+        self.blobs = self.root / "blobs"
+        self.traces = self.root / "traces"
 
     def blob_path(self, digest: str) -> Path:
         """Where a blob lives. Public because tooling and tests legitimately look."""
@@ -157,6 +178,8 @@ class Store:
         return self.blob_path(digest).exists()
 
     def save_trace(self, trace: Trace) -> Path:
+        """Persist a trace, stamping the canonicalisation scheme that produced it."""
+        trace.meta.setdefault("canon", fingerprint())
         self.traces.mkdir(parents=True, exist_ok=True)
         path = self.traces / f"{trace.id}.json"
         # Indented, so that a committed cassette produces a readable diff.
@@ -166,11 +189,19 @@ class Store:
         )
         return path
 
-    def load_trace(self, trace_id: str) -> Trace:
+    def load_trace(self, trace_id: str, *, check_canon: bool = True) -> Trace:
         path = self.traces / f"{trace_id}.json"
         if not path.exists():
             raise FileNotFoundError(f"trace {trace_id!r} not in {self.traces}")
-        return Trace.from_json(json.loads(path.read_text(encoding="utf-8")))
+        trace = Trace.from_json(json.loads(path.read_text(encoding="utf-8")))
+        if check_canon:
+            recorded = trace.meta.get("canon")
+            current = fingerprint()
+            # A trace with no stamp predates the stamp; nothing can be checked, so it
+            # is left alone rather than rejected.
+            if isinstance(recorded, str) and recorded != current:
+                raise CanonMismatch(trace_id, recorded, current)
+        return trace
 
     def list_traces(self) -> list[str]:
         if not self.traces.exists():

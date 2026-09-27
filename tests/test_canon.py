@@ -141,3 +141,49 @@ class TestCanonicalForm:
         assert out["dropped_fields"] == ["stream", "user"]
         assert out["rules"] == ["iso8601", "uuid", "epoch_ms"]
         assert out["canonical"]["model"] == "m"
+
+
+class TestNullNormalisation:
+    """Explicit nulls must not make two equivalent requests look different.
+
+    A loop that appends a response message verbatim sends `"content": null` on an
+    assistant tool-call message; the official SDK omits the field. Both mean "no
+    content", and treating them as different requests made cassettes
+    client-specific -- caught by the SDK compatibility test, not by a unit test.
+    """
+
+    def test_explicit_null_equals_an_omitted_field(self) -> None:
+        verbose = req(
+            messages=[
+                {"role": "assistant", "content": None, "tool_calls": [{"id": "c1"}]},
+            ]
+        )
+        terse = req(messages=[{"role": "assistant", "tool_calls": [{"id": "c1"}]}])
+        assert request_key(verbose) == request_key(terse)
+
+    def test_nulls_are_dropped_at_every_depth(self) -> None:
+        nested = req(
+            messages=[
+                {
+                    "role": "assistant",
+                    "tool_calls": [{"id": "c1", "function": {"name": "f", "arguments": None}}],
+                }
+            ]
+        )
+        canon = canonical_request(nested)
+        assert "arguments" not in canon["messages"][0]["tool_calls"][0]["function"]
+
+    def test_null_top_level_option_equals_an_omitted_one(self) -> None:
+        assert request_key(req(stop=None)) == request_key(req())
+
+    def test_a_present_value_is_not_dropped(self) -> None:
+        assert request_key(req(stop=["x"])) != request_key(req())
+
+    def test_false_and_zero_survive(self) -> None:
+        # Only None is dropped. Falsy-but-present values are real settings.
+        canon = canonical_request(req(parallel_tool_calls=False, temperature=0))
+        assert canon["parallel_tool_calls"] is False
+        assert canon["temperature"] == 0
+
+    def test_explain_reports_the_structural_rule(self) -> None:
+        assert explain(req())["structural_rules"] == ["drop_null_fields"]

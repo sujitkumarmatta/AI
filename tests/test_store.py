@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from misfeed.store import CassetteMiss, Entry, Player, Store, Trace
+from misfeed.store import CanonMismatch, CassetteMiss, Entry, Player, Store, Trace
 
 
 @pytest.fixture
@@ -231,3 +231,92 @@ class TestPlayer:
             player.take("unseen")
         assert player.served == 0
         assert player.take("k0") == {"text": "a"}
+
+
+class TestStoreConstruction:
+    def test_accepts_a_string_root(self, tmp_path: Path) -> None:
+        # Store is a public entry point; callers reach for a string.
+        store = Store(str(tmp_path / "cassettes"))
+        digest = store.put_blob({"x": 1})
+        assert store.get_blob(digest) == {"x": 1}
+
+    def test_string_and_path_roots_agree(self, tmp_path: Path) -> None:
+        root = tmp_path / "cassettes"
+        assert Store(str(root)).blobs == Store(root).blobs
+
+
+class TestCanonStamp:
+    """A trace records the canonicalisation scheme that produced it.
+
+    Without this, changing the scheme makes every stored key miss, which surfaces as
+    "the cassettes are incomplete" and silently re-records the whole study -- at cost,
+    if the upstream is a paid endpoint. This was not hypothetical: normalising explicit
+    nulls invalidated every committed cassette, and the failure was unreadable.
+    """
+
+    def test_saving_stamps_the_scheme(self, store: Store) -> None:
+        from misfeed.canon import fingerprint
+
+        trunk(store, "t1", ["a"])
+        assert store.load_trace("t1").meta["canon"] == fingerprint()
+
+    def test_a_mismatched_stamp_raises_with_both_values(self, store: Store) -> None:
+        from misfeed.canon import fingerprint
+
+        trunk(store, "t1", ["a"])
+        path = store.traces / "t1.json"
+        raw = json.loads(path.read_text())
+        raw["meta"]["canon"] = "different001"
+        path.write_text(json.dumps(raw))
+
+        with pytest.raises(CanonMismatch) as caught:
+            store.load_trace("t1")
+        assert caught.value.recorded == "different001"
+        assert caught.value.current == fingerprint()
+        assert "Re-record the trace" in str(caught.value)
+
+    def test_the_check_can_be_skipped_to_inspect_a_stale_trace(self, store: Store) -> None:
+        trunk(store, "t1", ["a"])
+        path = store.traces / "t1.json"
+        raw = json.loads(path.read_text())
+        raw["meta"]["canon"] = "different001"
+        path.write_text(json.dumps(raw))
+        # Listing stale traces is how you find out they are stale.
+        assert store.load_trace("t1", check_canon=False).id == "t1"
+
+    def test_an_unstamped_trace_is_accepted(self, store: Store) -> None:
+        # Traces predating the stamp cannot be checked, so they are left alone rather
+        # than rejected.
+        trunk(store, "t1", ["a"])
+        path = store.traces / "t1.json"
+        raw = json.loads(path.read_text())
+        raw["meta"].pop("canon")
+        path.write_text(json.dumps(raw))
+        assert store.load_trace("t1").id == "t1"
+
+    def test_resolve_surfaces_a_mismatch(self, store: Store) -> None:
+        trunk(store, "t1", ["a"])
+        path = store.traces / "t1.json"
+        raw = json.loads(path.read_text())
+        raw["meta"]["canon"] = "different001"
+        path.write_text(json.dumps(raw))
+        with pytest.raises(CanonMismatch):
+            store.resolve("t1")
+
+
+class TestFingerprint:
+    def test_is_stable_for_the_same_scheme(self) -> None:
+        from misfeed.canon import DEFAULT_RULES, fingerprint
+
+        assert fingerprint(DEFAULT_RULES) == fingerprint(DEFAULT_RULES)
+
+    def test_changes_when_a_rule_changes(self) -> None:
+        from misfeed.canon import DEFAULT_RULES, NormalizeRule, fingerprint
+
+        altered = (*DEFAULT_RULES, NormalizeRule.of("extra", r"x", "y"))
+        assert fingerprint(altered) != fingerprint(DEFAULT_RULES)
+
+    def test_is_short_enough_to_read_in_a_diff(self) -> None:
+        from misfeed.canon import fingerprint
+
+        assert len(fingerprint()) == 12

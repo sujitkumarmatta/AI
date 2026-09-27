@@ -17,9 +17,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from misfeed.canon import fingerprint as canon_fingerprint
 from misfeed.faults import FAULT_IDS, REGISTRY, FaultSpec
 from misfeed.proxy import Mode, ProxyConfig, create_app
-from misfeed.store import Store
+from misfeed.store import CanonMismatch, Store
 from misfeed.verdict import Outcome
 
 __all__ = ["main"]
@@ -62,7 +63,11 @@ def cmd_serve(args: argparse.Namespace) -> int:
         print(f"error: {bad}", file=sys.stderr)
         return 2
 
-    app = create_app(config)
+    try:
+        app = create_app(config)
+    except CanonMismatch as stale:
+        print(f"error: {stale}", file=sys.stderr)
+        return 3
     print(f"misfeed {mode.value} on http://{args.host}:{args.port}/v1  trace={args.trace}")
     print(f"point your agent at:  OPENAI_BASE_URL=http://{args.host}:{args.port}/v1")
     if mode is Mode.REPLAY:
@@ -80,9 +85,14 @@ def cmd_traces(args: argparse.Namespace) -> int:
     if not traces:
         print(f"no traces in {args.store}")
         return 1
+    current = canon_fingerprint()
     for trace_id in traces:
-        trace = store.load_trace(trace_id)
+        # Listing must survive a stale trace: this command is how you discover one.
+        trace = store.load_trace(trace_id, check_canon=False)
         detail = f"{len(trace.entries):>3} entries"
+        recorded = trace.meta.get("canon")
+        if isinstance(recorded, str) and recorded != current:
+            detail += f"  [STALE: recorded under canon {recorded}, this build is {current}]"
         if trace.kind == "branch":
             fault = (trace.fault or {}).get("fault", "?")
             detail += f"  branch of {trace.parent} at step {trace.fork_step}, fault={fault}"
@@ -96,8 +106,8 @@ def cmd_show(args: argparse.Namespace) -> int:
     store = _store(args)
     try:
         trace = store.load_trace(args.trace)
-    except FileNotFoundError as missing:
-        print(f"error: {missing}", file=sys.stderr)
+    except (FileNotFoundError, CanonMismatch) as problem:
+        print(f"error: {problem}", file=sys.stderr)
         return 1
 
     print(f"trace   : {trace.id} ({trace.kind})")

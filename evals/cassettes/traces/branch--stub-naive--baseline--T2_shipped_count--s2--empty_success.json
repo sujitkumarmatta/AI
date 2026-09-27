@@ -2,8 +2,8 @@
   "entries": [
     {
       "blob": "fbef77fa04c838613205e2736e8ad9570441234f9e7634178bd9b0bc1635bbaa",
-      "request": "5f55dc85a06a45665676651ffda056ebf399c7cbfabba5ce17d60ecc582f9df7",
-      "request_key": "5f55dc85a06a45665676651ffda056ebf399c7cbfabba5ce17d60ecc582f9df7",
+      "request": "dc68d67ed44efaa28576b4c525894426e068c0ecc9d351a2f15db69b1d92d5ca",
+      "request_key": "dc68d67ed44efaa28576b4c525894426e068c0ecc9d351a2f15db69b1d92d5ca",
       "step": 2
     }
   ],
@@ -24,13 +24,14 @@
   "id": "branch--stub-naive--baseline--T2_shipped_count--s2--empty_success",
   "kind": "branch",
   "meta": {
+    "canon": "517b20dbe106",
     "fault": "empty_success",
     "live_calls": 1,
     "model": "stub/naive",
     "step": 2,
     "steps": [
       {
-        "latency_ms": 0.283,
+        "latency_ms": 0.245,
         "request_key": "7fa33008c665b1355a85e78577847e95e3d0fe2dbf163274403b83504a9cd919",
         "source": "cassette",
         "step": 0,
@@ -41,8 +42,8 @@
         }
       },
       {
-        "latency_ms": 0.266,
-        "request_key": "4e3e7b8598e17b8e814a9a2f8f0417657519d2bf5d775f06438895341eda9e1f",
+        "latency_ms": 0.319,
+        "request_key": "829f58c13e6ce09ba14ea3878245d19c984a0218beeaa234091379bb0508c68e",
         "source": "cassette",
         "step": 1,
         "usage": {
@@ -62,8 +63,8 @@
           "was_bytes": 336
         },
         "fault_present": true,
-        "latency_ms": 1.118,
-        "request_key": "5f55dc85a06a45665676651ffda056ebf399c7cbfabba5ce17d60ecc582f9df7",
+        "latency_ms": 1.223,
+        "request_key": "dc68d67ed44efaa28576b4c525894426e068c0ecc9d351a2f15db69b1d92d5ca",
         "source": "live",
         "step": 2,
         "usage": {

@@ -11,6 +11,12 @@ make it non-trivial:
     non-streaming call for identical content are the same logical request with
     different framing, so `stream` is excluded from the key and the framing is
     synthesised at replay time instead.
+3.  Clients disagree about explicit nulls. A loop that appends a response message
+    verbatim sends `"content": null` on an assistant tool-call message; the official
+    SDK's `model_dump(exclude_none=True)` omits the field entirely. Both mean "no
+    content", so null-valued fields are dropped before hashing. Without this, a
+    cassette recorded by one client cannot be replayed by another -- which was true
+    of this project until a compatibility test against the official SDK showed it.
 
 Both choices trade exactness for usability, so both are visible: `explain()`
 returns the canonical form that was hashed, and a replay miss prints it rather
@@ -31,6 +37,7 @@ __all__ = [
     "canonical_json",
     "canonical_request",
     "explain",
+    "fingerprint",
     "request_key",
 ]
 
@@ -110,7 +117,10 @@ def _normalize(value: Any, rules: tuple[NormalizeRule, ...]) -> Any:
         # temperature 0 and 0.0 are the same request; JSON renders them apart.
         return int(value)
     if isinstance(value, dict):
-        return {k: _normalize(v, rules) for k, v in value.items()}
+        # An explicit null and an omitted optional field mean the same thing in this
+        # API, and clients disagree about which they send. Dropping nulls is what
+        # makes a cassette portable between clients.
+        return {k: _normalize(v, rules) for k, v in value.items() if v is not None}
     if isinstance(value, list):
         return [_normalize(v, rules) for v in value]
     return value
@@ -119,8 +129,13 @@ def _normalize(value: Any, rules: tuple[NormalizeRule, ...]) -> Any:
 def canonical_request(
     body: dict[str, Any], rules: tuple[NormalizeRule, ...] = DEFAULT_RULES
 ) -> dict[str, Any]:
-    """Reduce a request body to the fields that determine the completion."""
-    return {k: _normalize(body[k], rules) for k in KEY_FIELDS if k in body}
+    """Reduce a request body to the fields that determine the completion.
+
+    Null-valued fields are dropped here as well as inside nested objects, so the rule
+    holds at every depth: a client that sends `"stop": null` and one that omits `stop`
+    are making the same request.
+    """
+    return {k: _normalize(body[k], rules) for k in KEY_FIELDS if k in body and body[k] is not None}
 
 
 def canonical_json(obj: Any) -> bytes:
@@ -135,6 +150,29 @@ def request_key(body: dict[str, Any], rules: tuple[NormalizeRule, ...] = DEFAULT
     return hashlib.sha256(canonical_json(canonical_request(body, rules))).hexdigest()
 
 
+def fingerprint(rules: tuple[NormalizeRule, ...] = DEFAULT_RULES) -> str:
+    """A short hash of the canonicalisation scheme itself.
+
+    Every recorded trace stores this. If the scheme changes -- a field added to
+    KEY_FIELDS, a normalisation rule edited, the null-dropping behaviour altered --
+    previously recorded keys stop matching and every request misses. Without a stamp
+    that shows up as "the cassettes are incomplete", and a run against a paid endpoint
+    quietly re-records the whole study.
+
+    Derived rather than hand-maintained, because a version integer someone has to
+    remember to bump is a version integer that does not get bumped. Changing the
+    scheme changes this automatically.
+    """
+    material = canonical_json(
+        {
+            "key_fields": list(KEY_FIELDS),
+            "rules": [[r.name, r.pattern.pattern, r.replacement] for r in rules],
+            "structural": ["drop_null_fields", "integral_float_to_int", "exclude_stream"],
+        }
+    )
+    return hashlib.sha256(material).hexdigest()[:12]
+
+
 def explain(
     body: dict[str, Any], rules: tuple[NormalizeRule, ...] = DEFAULT_RULES
 ) -> dict[str, Any]:
@@ -142,6 +180,8 @@ def explain(
     return {
         "key": request_key(body, rules),
         "rules": [r.name for r in rules],
+        "structural_rules": ["drop_null_fields"],
+        "canon": fingerprint(rules),
         "dropped_fields": sorted(set(body) - set(KEY_FIELDS)),
         "canonical": canonical_request(body, rules),
     }
