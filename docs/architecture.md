@@ -54,8 +54,13 @@ agent ──┬─ calls its own tools locally (real results) ──────
                               message in this request
 ```
 
-This is why it works against any framework in any language with no code changes and
-no monkey-patching. It is also the boundary of what it can see: the agent's own
+Because the interception point is the HTTP API rather than any SDK, there is nothing
+framework-specific in the mechanism: any client speaking OpenAI chat-completions,
+in any language, needs only its base URL redirected. That said, it has been exercised
+against this repository's own agent loop and not yet against a third-party framework,
+so treat wider compatibility as expected rather than demonstrated.
+
+The interception point is also the boundary of what it can see: the agent's own
 retry wrapper and validation code run against the *real* tool result and are never
 exercised. An SDK-level injector would cover that half. It does not exist.
 

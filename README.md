@@ -38,7 +38,7 @@ network — which is the point: a result nobody else can reproduce is not a resu
 
 ```mermaid
 flowchart LR
-    subgraph AUT["agent under test (any framework, any language)"]
+    subgraph AUT["agent under test (any OpenAI-compatible client)"]
         A["agent loop"] --> T["tools"]
     end
     A -->|"OpenAI-compatible HTTP"| P
@@ -57,9 +57,13 @@ flowchart LR
 
 Faults are applied by rewriting the tool-result message **in the outgoing
 request**. The agent's tool really returned its normal payload; only the model is
-shown the corrupted version. That is why this works against any framework in any
-language without touching its code — and it is also the main limitation, spelled
-out below.
+shown the corrupted version. Nothing about the agent is patched or wrapped, so this
+works with any client that speaks the OpenAI chat-completions API, in any language
+— and it is also the main limitation, spelled out below.
+
+Verified so far against this repository's own agent loop only. The interception
+point is the HTTP API rather than any SDK, so there is nothing framework-specific in
+the mechanism, but "works with LangGraph" is not a claim I have earned yet.
 
 ## Quickstart
 

@@ -201,7 +201,7 @@ class TestReproducibilityCheck:
         last = store.resolve(trace_id)[-1]
         blob = store.get_blob(last.blob)
         blob["choices"][0]["message"]["content"] = "ANSWER: 6725"
-        path = store._blob_path(last.blob)
+        path = store.blob_path(last.blob)
         path.write_text(json.dumps(blob, sort_keys=True), encoding="utf-8")
 
         assert (

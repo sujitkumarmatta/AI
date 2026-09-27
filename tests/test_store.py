@@ -52,9 +52,9 @@ class TestBlobs:
 
     def test_rewriting_the_same_blob_is_a_noop(self, store: Store) -> None:
         digest = store.put_blob({"x": 1})
-        mtime = store._blob_path(digest).stat().st_mtime_ns
+        mtime = store.blob_path(digest).stat().st_mtime_ns
         assert store.put_blob({"x": 1}) == digest
-        assert store._blob_path(digest).stat().st_mtime_ns == mtime
+        assert store.blob_path(digest).stat().st_mtime_ns == mtime
 
 
 class TestTraceValidation:

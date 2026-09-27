@@ -131,7 +131,8 @@ class Store:
         self.blobs = root / "blobs"
         self.traces = root / "traces"
 
-    def _blob_path(self, digest: str) -> Path:
+    def blob_path(self, digest: str) -> Path:
+        """Where a blob lives. Public because tooling and tests legitimately look."""
         return self.blobs / digest[:2] / f"{digest}.json"
 
     def put_blob(self, obj: Any) -> str:
@@ -140,20 +141,20 @@ class Store:
 
         payload = canonical_json(obj)
         digest = hashlib.sha256(payload).hexdigest()
-        path = self._blob_path(digest)
+        path = self.blob_path(digest)
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(payload)
         return digest
 
     def get_blob(self, digest: str) -> Any:
-        path = self._blob_path(digest)
+        path = self.blob_path(digest)
         if not path.exists():
             raise FileNotFoundError(f"blob {digest} not in {self.blobs}")
         return json.loads(path.read_bytes())
 
     def has_blob(self, digest: str) -> bool:
-        return self._blob_path(digest).exists()
+        return self.blob_path(digest).exists()
 
     def save_trace(self, trace: Trace) -> Path:
         self.traces.mkdir(parents=True, exist_ok=True)
