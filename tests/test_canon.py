@@ -185,5 +185,67 @@ class TestNullNormalisation:
         assert canon["parallel_tool_calls"] is False
         assert canon["temperature"] == 0
 
-    def test_explain_reports_the_structural_rule(self) -> None:
-        assert explain(req())["structural_rules"] == ["drop_null_fields"]
+    def test_explain_reports_the_null_rule(self) -> None:
+        assert "drop_null_fields" in explain(req())["structural_rules"]
+
+
+class TestStreamingFramingIsStripped:
+    """A streamed reply, accumulated and sent back, must hash like a plain one.
+
+    A client that accumulates a stream keeps the delta's `index` on each tool call and
+    includes it in the assistant message it sends next. A non-streaming client has no
+    such field. Until this was stripped, a streaming and a non-streaming client could
+    not share a cassette -- found by driving the official SDK down both paths, not by
+    any unit test.
+    """
+
+    def assistant(self, *, with_index: bool) -> dict[str, Any]:
+        call: dict[str, Any] = {
+            "id": "call_1",
+            "type": "function",
+            "function": {"name": "f", "arguments": "{}"},
+        }
+        if with_index:
+            call["index"] = 0
+        return {"role": "assistant", "tool_calls": [call]}
+
+    def test_accumulated_index_does_not_change_the_key(self) -> None:
+        streamed = req(messages=[self.assistant(with_index=True)])
+        plain = req(messages=[self.assistant(with_index=False)])
+        assert request_key(streamed) == request_key(plain)
+
+    def test_index_is_absent_from_the_canonical_form(self) -> None:
+        canon = canonical_request(req(messages=[self.assistant(with_index=True)]))
+        assert "index" not in canon["messages"][0]["tool_calls"][0]
+
+    def test_tool_call_order_is_still_significant(self) -> None:
+        # Position carries what `index` claimed to, so order must still matter.
+        def two(first: str, second: str) -> dict[str, Any]:
+            return {
+                "role": "assistant",
+                "tool_calls": [
+                    {"id": first, "type": "function", "function": {"name": "f"}},
+                    {"id": second, "type": "function", "function": {"name": "g"}},
+                ],
+            }
+
+        assert request_key(req(messages=[two("a", "b")])) != request_key(
+            req(messages=[two("b", "a")])
+        )
+
+    def test_other_tool_call_fields_survive(self) -> None:
+        canon = canonical_request(req(messages=[self.assistant(with_index=True)]))
+        call = canon["messages"][0]["tool_calls"][0]
+        assert call["id"] == "call_1"
+        assert call["function"]["name"] == "f"
+
+    def test_choice_level_index_is_untouched(self) -> None:
+        # `index` is only stripped inside a message's tool_calls; nothing else.
+        body = req(messages=[{"role": "user", "content": "q", "index": 3}])
+        assert canonical_request(body)["messages"][0]["index"] == 3
+
+    def test_explain_reports_the_structural_rules(self) -> None:
+        assert explain(req())["structural_rules"] == [
+            "drop_null_fields",
+            "drop_tool_call_index",
+        ]

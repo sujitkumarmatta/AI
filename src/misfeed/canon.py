@@ -17,6 +17,13 @@ make it non-trivial:
     content", so null-valued fields are dropped before hashing. Without this, a
     cassette recorded by one client cannot be replayed by another -- which was true
     of this project until a compatibility test against the official SDK showed it.
+4.  Streaming leaks its framing into the next request. A client that accumulates a
+    streamed reply keeps the delta's `index` on each tool call, then sends it back in
+    the assistant message; a non-streaming client has no such field. Position in the
+    `tool_calls` array already carries that information, and the API does not read
+    `index` there, so it is dropped. Without this a streaming and a non-streaming
+    client could not share a cassette -- found the same way, by driving the official
+    SDK down both paths.
 
 Both choices trade exactness for usability, so both are visible: `explain()`
 returns the canonical form that was hashed, and a replay miss prints it rather
@@ -107,6 +114,28 @@ def normalize_text(text: str, rules: tuple[NormalizeRule, ...] = DEFAULT_RULES) 
     return text
 
 
+def _strip_tool_call_framing(message: Any) -> Any:
+    """Remove streaming-accumulation artefacts from an assistant message.
+
+    Narrow on purpose. `index` is meaningful on a streaming delta and on
+    `choices[].index`; inside a request's `messages[].tool_calls[]` it is neither part
+    of the schema nor read by the API, it is just what a client's accumulator left
+    behind. Dropping it anywhere else would risk masking a real difference.
+    """
+    if not isinstance(message, dict):
+        return message
+    calls = message.get("tool_calls")
+    if not isinstance(calls, list):
+        return message
+    return {
+        **message,
+        "tool_calls": [
+            {k: v for k, v in call.items() if k != "index"} if isinstance(call, dict) else call
+            for call in calls
+        ],
+    }
+
+
 def _normalize(value: Any, rules: tuple[NormalizeRule, ...]) -> Any:
     if isinstance(value, str):
         return normalize_text(value, rules)
@@ -133,9 +162,14 @@ def canonical_request(
 
     Null-valued fields are dropped here as well as inside nested objects, so the rule
     holds at every depth: a client that sends `"stop": null` and one that omits `stop`
-    are making the same request.
+    are making the same request. Streaming-accumulation artefacts are then stripped
+    from each message, so a streaming and a non-streaming client agree.
     """
-    return {k: _normalize(body[k], rules) for k in KEY_FIELDS if k in body and body[k] is not None}
+    canon = {k: _normalize(body[k], rules) for k in KEY_FIELDS if k in body and body[k] is not None}
+    messages = canon.get("messages")
+    if isinstance(messages, list):
+        canon["messages"] = [_strip_tool_call_framing(m) for m in messages]
+    return canon
 
 
 def canonical_json(obj: Any) -> bytes:
@@ -167,7 +201,12 @@ def fingerprint(rules: tuple[NormalizeRule, ...] = DEFAULT_RULES) -> str:
         {
             "key_fields": list(KEY_FIELDS),
             "rules": [[r.name, r.pattern.pattern, r.replacement] for r in rules],
-            "structural": ["drop_null_fields", "integral_float_to_int", "exclude_stream"],
+            "structural": [
+                "drop_null_fields",
+                "drop_tool_call_index",
+                "integral_float_to_int",
+                "exclude_stream",
+            ],
         }
     )
     return hashlib.sha256(material).hexdigest()[:12]
@@ -180,7 +219,7 @@ def explain(
     return {
         "key": request_key(body, rules),
         "rules": [r.name for r in rules],
-        "structural_rules": ["drop_null_fields"],
+        "structural_rules": ["drop_null_fields", "drop_tool_call_index"],
         "canon": fingerprint(rules),
         "dropped_fields": sorted(set(body) - set(KEY_FIELDS)),
         "canonical": canonical_request(body, rules),

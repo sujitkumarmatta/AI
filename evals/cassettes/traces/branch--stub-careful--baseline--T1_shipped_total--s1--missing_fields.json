@@ -25,14 +25,14 @@
   "id": "branch--stub-careful--baseline--T1_shipped_total--s1--missing_fields",
   "kind": "branch",
   "meta": {
-    "canon": "517b20dbe106",
+    "canon": "9b313bf36e45",
     "fault": "missing_fields",
     "live_calls": 1,
     "model": "stub/careful",
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.25,
+        "latency_ms": 0.201,
         "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
         "source": "cassette",
         "step": 0,
@@ -54,7 +54,7 @@
           "tool_name": "find_customer"
         },
         "fault_present": true,
-        "latency_ms": 0.882,
+        "latency_ms": 0.637,
         "request_key": "213e5a44bf18901469bfac88a333b4095f9322ea562c27b3799f6f299ec3cc55",
         "source": "live",
         "step": 1,

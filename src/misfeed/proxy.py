@@ -15,13 +15,14 @@ An OpenAI-compatible `POST /v1/chat/completions` endpoint in three modes:
 reason: it makes an interrupted recording resumable rather than wasted, and it
 makes a completed experiment free to re-run.
 
-Two deliberate restrictions:
+Streaming is served by synthesising SSE framing from the stored response (see
+`misfeed.streaming`). The content a client reassembles is byte-for-byte what was
+recorded; the chunk boundaries are invented, because a recorded completion has no
+token boundaries in it. Nothing sleeps between chunks: faking inter-token delays
+would make a replay look like a live call while telling the caller nothing true.
 
-Streaming is rejected with a 400 rather than faked. Cassettes store the logical
-response and `stream` is excluded from the request key, so synthesising SSE on
-replay is a later addition that needs no cassette migration -- but a proxy that
-silently returned a non-streaming body to a client that asked for a stream would
-be exactly the kind of success-shaped lie this project is about.
+The response is resolved before the stream opens, so a cassette miss is still a
+clean 409 rather than a half-open stream that fails mid-flight.
 
 Live calls are always made non-streaming and are capped by `max_live_requests`.
 The cap exists because the intended recording budget is a free tier; exceeding it
@@ -40,12 +41,13 @@ from typing import Any
 import httpx2
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response, StreamingResponse
 from starlette.routing import Route
 
 from misfeed.canon import DEFAULT_RULES, NormalizeRule, canonical_request, explain, request_key
 from misfeed.faults import FaultSpec, inject_into_request
 from misfeed.store import CassetteMiss, Entry, Player, Store, Trace
+from misfeed.streaming import sse_stream
 
 __all__ = ["BudgetExceeded", "Engine", "Mode", "ProxyConfig", "create_app"]
 
@@ -81,6 +83,11 @@ class ProxyConfig:
     max_live_requests: int = 50
     rules: tuple[NormalizeRule, ...] = DEFAULT_RULES
     store_requests: bool = True
+    # Split synthesised streaming content into deltas of roughly this many
+    # characters. None means one delta, which is the least invention that is still
+    # valid SSE. Set it only to exercise a client's incremental accumulation path;
+    # the boundaries are made up either way.
+    stream_chunk_chars: int | None = None
     meta: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -424,29 +431,31 @@ def create_app(
             if engine.client is not None and owns_client:
                 await engine.client.aclose()
 
-    async def completions(request: Request) -> JSONResponse:
+    async def completions(request: Request) -> Response:
         try:
             body = await request.json()
         except ValueError:
             return JSONResponse({"error": {"message": "body is not valid JSON"}}, status_code=400)
         if not isinstance(body, dict):
             return JSONResponse({"error": {"message": "body must be an object"}}, status_code=400)
-        if body.get("stream"):
-            return JSONResponse(
-                {
-                    "error": {
-                        "message": (
-                            "misfeed does not serve streaming responses yet. Set stream=false. "
-                            "Cassettes are unaffected: `stream` is excluded from the request key, "
-                            "so recordings made now will work once synthesis lands."
-                        ),
-                        "type": "unsupported",
-                    }
-                },
-                status_code=400,
-            )
+        wants_stream = bool(body.get("stream"))
+        options = body.get("stream_options")
+        include_usage = bool(isinstance(options, dict) and options.get("include_usage"))
         try:
-            return JSONResponse(await engine.handle(body))
+            # Resolved before any stream opens, so a miss is a clean 409 rather than a
+            # half-open stream that dies mid-flight.
+            response = await engine.handle(body)
+            if not wants_stream:
+                return JSONResponse(response)
+            return StreamingResponse(
+                sse_stream(
+                    response,
+                    include_usage=include_usage,
+                    chunk_chars=config.stream_chunk_chars,
+                ),
+                media_type="text/event-stream",
+                headers={"cache-control": "no-store", "x-misfeed-synthesised-stream": "1"},
+            )
         except CassetteMiss as miss:
             return JSONResponse(
                 {"error": {"message": str(miss), "type": "cassette_miss", "key": miss.key}},

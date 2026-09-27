@@ -31,14 +31,14 @@
   "id": "branch--stub-naive--baseline--T1_shipped_total--s1--schema_drift",
   "kind": "branch",
   "meta": {
-    "canon": "517b20dbe106",
+    "canon": "9b313bf36e45",
     "fault": "schema_drift",
     "live_calls": 2,
     "model": "stub/naive",
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.244,
+        "latency_ms": 0.251,
         "request_key": "2a4f28063c294bc14ffd15f8ae2aa91207436476dd73cfb33e136a948933e60c",
         "source": "cassette",
         "step": 0,
@@ -60,7 +60,7 @@
           "tool_name": "find_customer"
         },
         "fault_present": true,
-        "latency_ms": 0.984,
+        "latency_ms": 0.757,
         "request_key": "439b39ba76416a8ab31146746855d4c9cf310f43793067562b3469eda1989eae",
         "source": "live",
         "step": 1,
@@ -72,7 +72,7 @@
       },
       {
         "fault_present": true,
-        "latency_ms": 1.206,
+        "latency_ms": 0.632,
         "request_key": "a824a45ea20bb5f5e1d1d943d08b3862c18e1e12461f25c75d9116e290c03608",
         "source": "live",
         "step": 2,

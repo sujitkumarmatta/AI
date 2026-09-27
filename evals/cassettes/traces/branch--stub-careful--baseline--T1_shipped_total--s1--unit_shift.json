@@ -36,14 +36,14 @@
   "id": "branch--stub-careful--baseline--T1_shipped_total--s1--unit_shift",
   "kind": "branch",
   "meta": {
-    "canon": "517b20dbe106",
+    "canon": "9b313bf36e45",
     "fault": "unit_shift",
     "live_calls": 2,
     "model": "stub/careful",
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.241,
+        "latency_ms": 0.186,
         "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
         "source": "cassette",
         "step": 0,
@@ -70,7 +70,7 @@
           "tool_name": "find_customer"
         },
         "fault_present": true,
-        "latency_ms": 1.362,
+        "latency_ms": 0.697,
         "request_key": "3f57de25665d90a41c38ad47c26d3abb4e34926b4219e7d8d7542c24fde072e8",
         "source": "live",
         "step": 1,
@@ -82,7 +82,7 @@
       },
       {
         "fault_present": true,
-        "latency_ms": 0.827,
+        "latency_ms": 0.548,
         "request_key": "aa02cbe0b315b152a6974994bef39eb9cccbf2292662aac238f7799bdb37db76",
         "source": "live",
         "step": 2,

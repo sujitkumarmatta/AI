@@ -114,6 +114,13 @@ request. The cassette stores the logical response. Synthesising SSE on replay is
 therefore a later addition needing no cassette migration — but until it lands,
 `stream=true` is refused with a 400 rather than answered with a non-streaming body.
 
+**Streaming framing in the next request.** A client that accumulates a streamed reply
+keeps the delta's `index` on each tool call and sends it back in the assistant
+message; a non-streaming client has no such field. Position in the `tool_calls` array
+already carries that information and the API does not read `index` there, so it is
+stripped -- narrowly, inside a message's `tool_calls` only. Without it a streaming and
+a non-streaming client could not share a cassette.
+
 **Explicit nulls.** Null-valued fields are dropped at every depth. A loop that appends
 a response message verbatim sends `"content": null` on an assistant tool-call message;
 the official SDK's `model_dump(exclude_none=True)` omits the field. Both mean "no
@@ -182,7 +189,6 @@ experiments as "the corrupted result never reached the answer".
 | replay has no recorded response | `CassetteMiss` → 409 with the canonical request and which rules were applied |
 | live-request cap reached | `BudgetExceeded` → 429, nothing sent upstream |
 | upstream non-2xx | 502 carrying the upstream body, truncated |
-| agent asks for streaming | 400, explicitly unsupported |
 | malformed request body | 400 |
 | trace id does not exist | raises at app construction, not at first request |
 | trace ancestry contains a cycle | raises |
@@ -197,7 +203,6 @@ exists to expose.
 ## What is not here
 
 - No SDK-level injection, so the agent's own error handling is untested.
-- No streaming synthesis.
 - No MCP transport interception; faults reach tools only through the model-facing
   boundary.
 - No database or server. Cassettes are files; the study is a script. Nothing is

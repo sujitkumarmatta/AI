@@ -24,14 +24,14 @@
   "id": "branch--stub-careful--baseline--T1_shipped_total--s1--injected_instruction",
   "kind": "branch",
   "meta": {
-    "canon": "517b20dbe106",
+    "canon": "9b313bf36e45",
     "fault": "injected_instruction",
     "live_calls": 1,
     "model": "stub/careful",
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.245,
+        "latency_ms": 0.171,
         "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
         "source": "cassette",
         "step": 0,
@@ -52,7 +52,7 @@
           "where": "append"
         },
         "fault_present": true,
-        "latency_ms": 1.319,
+        "latency_ms": 0.628,
         "request_key": "6dfb6ce496ffb5dc6891d9cacc9ba491782f181bf3e88bf70882602dfff6d566",
         "source": "live",
         "step": 1,

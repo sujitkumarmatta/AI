@@ -22,12 +22,12 @@
   "id": "trunk--stub-careful--baseline--T2_shipped_count",
   "kind": "trunk",
   "meta": {
-    "canon": "517b20dbe106",
+    "canon": "9b313bf36e45",
     "live_calls": 3,
     "model": "stub/careful",
     "steps": [
       {
-        "latency_ms": 1.072,
+        "latency_ms": 0.756,
         "request_key": "8f775dc7f5663adf90f2b6e0e4732ede78daa743e978535fb321b2d421238902",
         "source": "live",
         "step": 0,
@@ -38,7 +38,7 @@
         }
       },
       {
-        "latency_ms": 1.212,
+        "latency_ms": 0.771,
         "request_key": "2034d0e9ecccae14db56fcdfbfee3e6f89f55f3167a6ae9c6eac598320e7c59f",
         "source": "live",
         "step": 1,
@@ -49,7 +49,7 @@
         }
       },
       {
-        "latency_ms": 1.139,
+        "latency_ms": 0.936,
         "request_key": "7523da63b863393eafd747568e5c8bc679ea1d3a877d92aa9cf72c7de2342a47",
         "source": "live",
         "step": 2,

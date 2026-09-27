@@ -54,8 +54,16 @@ async def run_with_sdk(
     world: World,
     system_prompt: str,
     max_steps: int = 6,
+    stream: bool = False,
 ) -> SdkAgentResult:
-    """A plain tool-calling loop, using the SDK's own request and response types."""
+    """A plain tool-calling loop, using the SDK's own request and response types.
+
+    With `stream=True` it uses the SDK's streaming helper and its own accumulator, so
+    the reassembled message comes from the SDK rather than from anything in this
+    repository. That is what makes it worth testing against a misfeed-synthesised
+    stream: the same cassette serves both paths, because `stream` is excluded from the
+    request key.
+    """
     messages: list[Any] = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": question},
@@ -63,13 +71,25 @@ async def run_with_sdk(
     called: list[str] = []
 
     for step in range(max_steps):
-        completion = await client.chat.completions.create(
-            model=model,
-            messages=messages,
-            tools=tools,  # type: ignore[arg-type]
-            temperature=0.0,
-        )
-        message = completion.choices[0].message
+        # The streaming and non-streaming helpers return differently-parameterised
+        # message types that share this shape, so the loop works against the shape.
+        message: Any
+        if stream:
+            async with client.chat.completions.stream(
+                model=model,
+                messages=messages,
+                tools=tools,  # type: ignore[arg-type]
+                temperature=0.0,
+            ) as streamed:
+                message = (await streamed.get_final_completion()).choices[0].message
+        else:
+            completion = await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                tools=tools,  # type: ignore[arg-type]
+                temperature=0.0,
+            )
+            message = completion.choices[0].message
         # model_dump drops None fields the API would reject on the way back in.
         messages.append(message.model_dump(exclude_none=True))
 
@@ -120,6 +140,7 @@ async def _main(args: argparse.Namespace) -> int:
             tools=task.tools,
             world=world,
             system_prompt=SYSTEM_PROMPTS[args.variant],
+            stream=args.stream,
         )
     finally:
         await client.close()
@@ -129,6 +150,7 @@ async def _main(args: argparse.Namespace) -> int:
     print(f"expected : {task.expected}")
     print(f"tools    : {' -> '.join(result.tool_calls) or '(none)'}")
     print(f"steps    : {result.steps}{' (hit ceiling)' if result.looped else ''}")
+    print(f"transport: {'streaming' if args.stream else 'non-streaming'}")
     print(f"\n{result.final_message}")
     return 0
 
@@ -140,6 +162,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--api-key", default=None)
     parser.add_argument("--task", default="T1_shipped_total")
     parser.add_argument("--variant", default="baseline", choices=sorted(SYSTEM_PROMPTS))
+    parser.add_argument(
+        "--stream",
+        action="store_true",
+        help="use the SDK's streaming helper; misfeed synthesises the framing",
+    )
     return asyncio.run(_main(parser.parse_args(argv)))
 
 

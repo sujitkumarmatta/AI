@@ -30,14 +30,14 @@
   "id": "branch--stub-naive--baseline--T1_shipped_total--s1--injected_instruction",
   "kind": "branch",
   "meta": {
-    "canon": "517b20dbe106",
+    "canon": "9b313bf36e45",
     "fault": "injected_instruction",
     "live_calls": 2,
     "model": "stub/naive",
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.294,
+        "latency_ms": 0.186,
         "request_key": "2a4f28063c294bc14ffd15f8ae2aa91207436476dd73cfb33e136a948933e60c",
         "source": "cassette",
         "step": 0,
@@ -58,7 +58,7 @@
           "where": "append"
         },
         "fault_present": true,
-        "latency_ms": 0.92,
+        "latency_ms": 0.675,
         "request_key": "e6b2bc7c3fb6600af139b178341806e0dd1b5e05b399822f706ab81a0bcf9ab7",
         "source": "live",
         "step": 1,
@@ -70,7 +70,7 @@
       },
       {
         "fault_present": true,
-        "latency_ms": 0.903,
+        "latency_ms": 0.56,
         "request_key": "af096190b05eaabc59504263ecfe29287c6f9d25a1f888e6f99c925826f6abe1",
         "source": "live",
         "step": 2,

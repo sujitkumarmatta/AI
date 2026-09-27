@@ -75,7 +75,7 @@ def serving(
         assert not thread.is_alive(), "proxy server did not shut down"
 
 
-async def _drive(base_url: str) -> str:
+async def _drive(base_url: str, *, stream: bool = False) -> str:
     """Run the SDK agent against `base_url`, returning its final message."""
     client = AsyncOpenAI(base_url=base_url, api_key="unused", max_retries=0)
     world = World()
@@ -87,6 +87,7 @@ async def _drive(base_url: str) -> str:
             tools=TASK.tools,
             world=world,
             system_prompt=SYSTEM_PROMPTS["baseline"],
+            stream=stream,
         )
         return result.final_message
     finally:
@@ -289,3 +290,96 @@ class TestCassettePortability:
                 world.close()
 
         assert asyncio.run(replay_with_own_agent()) == recorded
+
+
+class TestSynthesisedStreaming:
+    """The SDK's own accumulator must reassemble a synthesised stream correctly.
+
+    The framing misfeed emits is invented -- a recorded completion has no token
+    boundaries. What must be true is that a real client reassembling it gets exactly
+    the recorded message, including tool calls, and that the *same* cassette serves a
+    streaming and a non-streaming client, since `stream` is excluded from the request
+    key.
+    """
+
+    def test_a_streaming_client_replays_a_non_streaming_recording(self, tmp_path: Path) -> None:
+        store = Store(tmp_path / "cassettes")
+        with serving(
+            ProxyConfig(
+                mode=Mode.RECORD, store=store, trace_id="sdk", upstream_base_url="http://stub"
+            ),
+            _stub_client,
+        ) as base_url:
+            recorded = asyncio.run(_drive(base_url, stream=False))
+        assert answer_matches(extract_answer(recorded), TASK.expected)
+
+        # Same cassette, streaming client. Every step of the tool-calling loop is
+        # reassembled by the SDK from synthesised SSE.
+        with serving(ProxyConfig(mode=Mode.REPLAY, store=store, trace_id="sdk"), None) as base_url:
+            streamed = asyncio.run(_drive(base_url, stream=True))
+        assert streamed == recorded
+
+    def test_a_non_streaming_client_replays_a_streaming_recording(self, tmp_path: Path) -> None:
+        # The other direction, so the cassette is genuinely transport-agnostic.
+        store = Store(tmp_path / "cassettes")
+        with serving(
+            ProxyConfig(
+                mode=Mode.RECORD, store=store, trace_id="sdk", upstream_base_url="http://stub"
+            ),
+            _stub_client,
+        ) as base_url:
+            recorded = asyncio.run(_drive(base_url, stream=True))
+
+        with serving(ProxyConfig(mode=Mode.REPLAY, store=store, trace_id="sdk"), None) as base_url:
+            plain = asyncio.run(_drive(base_url, stream=False))
+        assert plain == recorded
+
+    def test_a_fault_reaches_a_streaming_client(self, tmp_path: Path) -> None:
+        store = Store(tmp_path / "cassettes")
+        with serving(
+            ProxyConfig(
+                mode=Mode.RECORD, store=store, trace_id="trunk", upstream_base_url="http://stub"
+            ),
+            _stub_client,
+        ) as base_url:
+            clean = asyncio.run(_drive(base_url, stream=True))
+        assert answer_matches(extract_answer(clean), TASK.expected)
+
+        fault_step = len(store.resolve("trunk")) - 1
+        with serving(
+            ProxyConfig(
+                mode=Mode.INJECT,
+                store=store,
+                trace_id="branch",
+                parent="trunk",
+                fault=FaultSpec(fault="empty_success"),
+                fault_at_step=fault_step,
+                upstream_base_url="http://stub",
+            ),
+            _stub_client,
+        ) as base_url:
+            faulted = asyncio.run(_drive(base_url, stream=True))
+
+        branch = store.load_trace("branch")
+        assert branch.fault is not None
+        assert branch.fault["outcome"]["applied"] is True
+        assert not answer_matches(extract_answer(faulted), TASK.expected)
+
+    def test_chunked_content_still_reassembles(self, tmp_path: Path) -> None:
+        # Forcing many small deltas exercises the client's incremental accumulation
+        # path. The boundaries are invented; the reassembled message must not be.
+        store = Store(tmp_path / "cassettes")
+        with serving(
+            ProxyConfig(
+                mode=Mode.RECORD, store=store, trace_id="sdk", upstream_base_url="http://stub"
+            ),
+            _stub_client,
+        ) as base_url:
+            recorded = asyncio.run(_drive(base_url, stream=False))
+
+        with serving(
+            ProxyConfig(mode=Mode.REPLAY, store=store, trace_id="sdk", stream_chunk_chars=3),
+            None,
+        ) as base_url:
+            streamed = asyncio.run(_drive(base_url, stream=True))
+        assert streamed == recorded

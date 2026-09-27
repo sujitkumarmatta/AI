@@ -73,7 +73,7 @@ line is the `base_url`.
 
 ```bash
 make setup    # uv sync
-make test     # 286 tests, no network, no API keys
+make test     # 327 tests, no network, no API keys
 make demo     # narrated walkthrough of one experiment, from committed cassettes
 make eval     # verify every number below reproduces, with 0 live calls
 ```
@@ -122,6 +122,13 @@ The tool returned three orders. The model was shown one. It answered confidently
 
 `misfeed faults` and `misfeed outcomes` list the taxonomies. Replay mode contacts
 nothing, so `serve --mode replay` needs no key at all.
+
+**Streaming works.** Frameworks that default to `stream=true` need no configuration
+change: the SSE framing is synthesised from the recorded response, and one cassette
+serves a streaming and a non-streaming client because `stream` is excluded from the
+request key. The reassembled message is byte-for-byte what was recorded — tested
+against the SDK's own stream accumulator in both directions — but the chunk
+boundaries are invented, since a recorded completion has none.
 
 ## Fault taxonomy
 
@@ -264,9 +271,11 @@ both, so the effect of that paragraph gets a number instead of an assertion.
 - **Tasks are synthetic and deterministic by necessity.** That buys honest grading
   and costs realism. The fault classes, not the tasks, carry the external
   validity.
-- **Streaming is refused, not supported.** `stream=true` returns a 400. Cassettes
-  are forward-compatible (`stream` is excluded from the request key), but many
-  agent frameworks default to streaming and will need it turned off for now.
+- **Streamed chunk boundaries are invented.** A streaming client gets back exactly
+  the message that was recorded — tested against the official SDK's own accumulator,
+  in both directions — but a recorded completion has no token boundaries in it, so the
+  framing is synthesised and nothing sleeps between chunks. Reassembled content is
+  real; anything you infer from chunk timing or size is not.
 - **Exact-match replay is brittle** against agents that inject volatile content
   into prompts. Three normalisation rules cover timestamps, UUIDs and epoch
   millis; anything else misses loudly rather than quietly going live.

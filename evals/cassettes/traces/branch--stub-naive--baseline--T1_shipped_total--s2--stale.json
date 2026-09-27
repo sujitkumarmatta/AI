@@ -37,14 +37,14 @@
   "id": "branch--stub-naive--baseline--T1_shipped_total--s2--stale",
   "kind": "branch",
   "meta": {
-    "canon": "517b20dbe106",
+    "canon": "9b313bf36e45",
     "fault": "stale",
     "live_calls": 1,
     "model": "stub/naive",
     "step": 2,
     "steps": [
       {
-        "latency_ms": 0.412,
+        "latency_ms": 0.232,
         "request_key": "2a4f28063c294bc14ffd15f8ae2aa91207436476dd73cfb33e136a948933e60c",
         "source": "cassette",
         "step": 0,
@@ -55,7 +55,7 @@
         }
       },
       {
-        "latency_ms": 0.499,
+        "latency_ms": 0.208,
         "request_key": "6e5990d90b44c605144ccb3b9315b33338bd38328d98d9e8b45b1cf7e6c8fbac",
         "source": "cassette",
         "step": 1,
@@ -89,7 +89,7 @@
           "tool_name": "list_orders"
         },
         "fault_present": true,
-        "latency_ms": 1.895,
+        "latency_ms": 0.826,
         "request_key": "d2880596ae326000d4751c989ea6b10de5eb7f3fd71a70f642552943639ab70b",
         "source": "live",
         "step": 2,

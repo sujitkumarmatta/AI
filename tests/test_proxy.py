@@ -695,7 +695,7 @@ class TestHttpSurface:
             assert reply.status_code == 409
             assert reply.json()["error"]["type"] == "cassette_miss"
 
-    def test_streaming_is_refused_not_faked(self, store: Store) -> None:
+    def test_streaming_is_synthesised_from_the_recorded_response(self, store: Store) -> None:
         recorder = Engine(
             ProxyConfig(
                 mode=Mode.RECORD, store=store, trace_id="t1", upstream_base_url="http://upstream/v1"
@@ -710,8 +710,22 @@ class TestHttpSurface:
         app = create_app(ProxyConfig(mode=Mode.REPLAY, store=store, trace_id="t1"))
         with TestClient(app) as client:
             reply = client.post("/v1/chat/completions", json={**ask(), "stream": True})
-            assert reply.status_code == 400
-            assert reply.json()["error"]["type"] == "unsupported"
+            assert reply.status_code == 200
+            assert reply.headers["content-type"].startswith("text/event-stream")
+            # The header marks the framing as synthesised, not recorded.
+            assert reply.headers["x-misfeed-synthesised-stream"] == "1"
+            events = [
+                line.removeprefix("data: ")
+                for line in reply.text.splitlines()
+                if line.startswith("data: ")
+            ]
+            assert events[-1] == "[DONE]"
+            content = "".join(
+                json.loads(e)["choices"][0]["delta"].get("content", "")
+                for e in events[:-1]
+                if json.loads(e)["choices"]
+            )
+            assert content == "x"
 
     @pytest.mark.parametrize(
         ("payload", "expected"),
