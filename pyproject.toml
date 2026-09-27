@@ -21,6 +21,11 @@ otel = [
 ]
 
 [dependency-groups]
+compat = [
+    "langchain>=1.0",
+    "langchain-openai>=1.6",
+    "langgraph>=1.2",
+]
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
@@ -57,4 +62,11 @@ known-first-party = ["misfeed", "evals"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["src/misfeed", "evals", "tests", "scripts"]
+files = ["src/misfeed", "evals", "tests", "scripts", "examples"]
+
+# The LangGraph compatibility example and test are optional, gated behind the
+# `compat` group. Without these overrides, type checking a checkout that has not
+# installed that group fails on imports it was never meant to require.
+[[tool.mypy.overrides]]
+module = ["langchain.*", "langchain_core.*", "langchain_openai.*", "langgraph.*"]
+ignore_missing_imports = true

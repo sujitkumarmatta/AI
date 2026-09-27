@@ -8,6 +8,10 @@ setup:        ## install the project and dev dependencies
 test:         ## run the test suite (no network, no API keys)
 	uv run pytest -q
 
+test-compat:  ## also run the LangGraph compatibility suite (heavier deps)
+	uv sync --group compat
+	uv run --group compat pytest -q
+
 lint:         ## style and correctness lints
 	uv run ruff check .
 	uv run ruff format --check .

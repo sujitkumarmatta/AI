@@ -1,5 +1,12 @@
 """A small deterministic world, its tools, and reference answers.
 
+Thread-safe, because agent frameworks call tools from an executor: LangGraph runs
+them in a thread pool, and a default sqlite3 connection refuses use from any thread
+but its creator. The connection is opened with `check_same_thread=False` and every
+access is taken under a lock, which is correct here because the database is read-only
+after construction and contention is irrelevant at this size.
+
+
 Tasks are answerable by a SQL query over this data, which is the point: a task
 whose ground truth is computed cannot drift, cannot be gamed, and needs no
 labelling. That restricts the tasks to verifiable ones -- an honest cost, paid so
@@ -19,6 +26,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 from dataclasses import dataclass
 from typing import Any
 
@@ -102,7 +110,10 @@ class World:
     """The database plus the tool implementations that read it."""
 
     def __init__(self) -> None:
-        self.db = sqlite3.connect(":memory:")
+        # check_same_thread=False plus a lock: frameworks dispatch tools onto an
+        # executor, and a default connection would refuse the call.
+        self.db = sqlite3.connect(":memory:", check_same_thread=False)
+        self._lock = threading.Lock()
         self.db.row_factory = sqlite3.Row
         self.db.executescript(SCHEMA)
         self.db.executemany("INSERT INTO customers VALUES (?, ?, ?)", CUSTOMERS)
@@ -114,9 +125,10 @@ class World:
         self.db.close()
 
     def find_customer(self, name: str) -> dict[str, Any]:
-        row = self.db.execute(
-            "SELECT customer_id, name, region FROM customers WHERE name = ?", (name,)
-        ).fetchone()
+        with self._lock:
+            row = self.db.execute(
+                "SELECT customer_id, name, region FROM customers WHERE name = ?", (name,)
+            ).fetchone()
         if row is None:
             return {"error": f"no customer named {name!r}"}
         return {"customer_id": row["customer_id"], "name": row["name"], "region": row["region"]}
@@ -131,6 +143,8 @@ class World:
             sql += " AND status = ?"
             params.append(status)
         sql += " ORDER BY order_id"
+        with self._lock:
+            rows = self.db.execute(sql, params).fetchall()
         return {
             "orders": [
                 {
@@ -140,7 +154,7 @@ class World:
                     "placed_on": row["placed_on"],
                     "status": row["status"],
                 }
-                for row in self.db.execute(sql, params)
+                for row in rows
             ]
         }
 
@@ -157,7 +171,8 @@ class World:
         else:
             result = {"error": f"no such tool {name!r}"}
         payload = json.dumps(result)
-        self.calls.append(ToolCallRecord(name=name, arguments=arguments, result=payload))
+        with self._lock:
+            self.calls.append(ToolCallRecord(name=name, arguments=arguments, result=payload))
         return payload
 
 

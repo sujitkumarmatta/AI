@@ -61,13 +61,32 @@ shown the corrupted version. Nothing about the agent is patched or wrapped, so t
 works with any client that speaks the OpenAI chat-completions API, in any language
 — and it is also the main limitation, spelled out below.
 
-This is tested, not assumed. `tests/test_compat_openai_sdk.py` drives an unmodified
-`openai.AsyncOpenAI` client over a real socket against a uvicorn-served proxy: it
-records a run, replays it with zero live calls, and has a fault injected into it. It
-also checks **cassette portability in both directions** — a cassette recorded by this
-repository's own agent loop replays under the official SDK and vice versa.
-`examples/openai_sdk_agent.py` is the worked example, and its only misfeed-specific
-line is the `base_url`.
+This is tested against two real clients, not assumed.
+
+`tests/test_compat_openai_sdk.py` drives an unmodified `openai.AsyncOpenAI` over a
+real socket against a uvicorn-served proxy: records a run, replays it with zero live
+calls, injects a fault, and does all of it streaming and non-streaming. It also checks
+**cassette portability in both directions** — a cassette recorded by this repository's
+own agent loop replays under the official SDK and vice versa.
+
+`tests/test_compat_langgraph.py` does the same through **LangGraph**, which is a
+genuinely different client: requests go via `langchain-openai`, which has its own
+message serialisation and generates tool schemas from Python signatures. It also
+dispatches tools onto a thread pool.
+
+Worked examples are [`examples/openai_sdk_agent.py`](examples/openai_sdk_agent.py) and
+[`examples/langgraph_agent.py`](examples/langgraph_agent.py). In both, the only
+misfeed-specific line is the `base_url`.
+
+Writing them found four bugs no unit test would have: cassettes were silently
+client-specific, streamed framing leaked into the next request, changing the
+canonicalisation scheme failed illegibly, and the world fixture was not thread-safe.
+Driving real clients is the only thing that surfaced any of them.
+
+One nuance worth knowing: a cassette is keyed on the whole logical request, tool
+definitions included. LangChain generates schemas from signatures, so they differ from
+hand-written ones — meaning a LangGraph cassette is not interchangeable with a
+plain-SDK one. That is correct, not a defect: those are different requests.
 
 ## Quickstart
 
@@ -77,6 +96,9 @@ make test     # 327 tests, no network, no API keys
 make demo     # narrated walkthrough of one experiment, from committed cassettes
 make eval     # verify every number below reproduces, with 0 live calls
 ```
+
+`make test-compat` additionally runs a LangGraph compatibility suite, kept in its own
+dependency group so an ordinary `make test` stays fast.
 
 `make demo` prints, for one experiment: the task and where its right answer comes
 from, the clean run that gates it, what the tool really returned versus what the
@@ -319,7 +341,9 @@ both, so the effect of that paragraph gets a number instead of an assertion.
   threats to validity in order of severity.
 - [Decision records](docs/adr/) — the four decisions that had real alternatives.
 - [`examples/openai_sdk_agent.py`](examples/openai_sdk_agent.py) — a tool-calling
-  agent written against the official `openai` SDK, pointed at misfeed by one line.
+  agent on the official `openai` SDK, streaming and non-streaming.
+- [`examples/langgraph_agent.py`](examples/langgraph_agent.py) — the same task as a
+  LangGraph agent, pointed at misfeed by one line.
 
 ## Contributing
 

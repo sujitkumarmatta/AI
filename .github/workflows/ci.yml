@@ -29,6 +29,14 @@ jobs:
       - name: tests
         run: uv run pytest -q
 
+      # LangGraph is a second, independent client. It lives in its own dependency
+      # group so an ordinary `make test` stays fast, but the compatibility claim is
+      # only worth making if CI checks it.
+      - name: compatibility suite (LangGraph)
+        run: |
+          uv sync --group compat
+          uv run --group compat pytest tests/test_compat_langgraph.py -q
+
       - name: committed results reproduce from committed cassettes
         run: uv run python -m evals.study --check
 

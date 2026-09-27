@@ -73,8 +73,18 @@ def main(argv: list[str] | None = None) -> int:
             f"README no longer states the replay bound of under {args.bench_bound_ms} ms"
         )
 
+    # The optional compatibility suite is excluded so the claim does not depend on
+    # whether the `compat` dependency group happens to be installed. Its size is
+    # stated separately in the README and is not checked here.
     collected = subprocess.run(
-        [sys.executable, "-m", "pytest", "-q", "--co"],
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            "--co",
+            "--ignore=tests/test_compat_langgraph.py",
+        ],
         capture_output=True,
         text=True,
         check=False,

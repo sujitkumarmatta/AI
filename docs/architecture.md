@@ -58,12 +58,21 @@ Because the interception point is the HTTP API rather than any SDK, there is not
 framework-specific in the mechanism: any client speaking OpenAI chat-completions, in
 any language, needs only its base URL redirected.
 
-This is covered by tests rather than assumed. `tests/test_compat_openai_sdk.py` drives
-an unmodified `openai.AsyncOpenAI` over a real socket against a uvicorn-served proxy,
-records and replays, injects a fault, and checks cassette portability in both
-directions. It is also the only test that exercises the real server path — uvicorn,
-sockets, and the lifespan that flushes a recording on shutdown; every other test drives
-the ASGI app in-process and skips all three.
+This is covered by tests against two independent clients rather than assumed.
+`tests/test_compat_openai_sdk.py` drives an unmodified `openai.AsyncOpenAI` over a real
+socket against a uvicorn-served proxy — record, replay, fault injection, streaming and
+non-streaming, and cassette portability in both directions.
+`tests/test_compat_langgraph.py` does the same through LangGraph, whose requests go via
+`langchain-openai` with its own serialisation and generated tool schemas, and whose
+tools run on a thread pool. These are also the only tests that exercise the real server
+path — uvicorn, sockets, and the lifespan that flushes a recording on shutdown; every
+other test drives the ASGI app in-process and skips all three.
+
+A cassette is keyed on the whole logical request, tool definitions included, so a
+LangGraph cassette and a plain-SDK cassette are not interchangeable: LangChain
+generates schemas from signatures while the other sends hand-written ones. Portability
+holds between clients issuing the same logical request, which is what the
+bidirectional test demonstrates.
 
 The interception point is also the boundary of what it can see: the agent's own
 retry wrapper and validation code run against the *real* tool result and are never
