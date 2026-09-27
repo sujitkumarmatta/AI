@@ -2,8 +2,7 @@
 
 The proxy corrupts the tool-result message on its way to the model, which needs no
 cooperation from the agent but has a boundary: the agent's own retry wrapper and
-validation code see the genuine payload and are never exercised. See
-`docs/adr/001-intercept-at-the-provider-boundary.md`.
+validation code see the genuine payload and are never exercised.
 
 This module is the other half. It is a single call inserted at the point the agent
 dispatches a tool, so the corrupted value is what the agent's code gets back:

@@ -131,7 +131,7 @@ class TestOfficialSdkRecordAndReplay:
         # and one cassette player, which consumes a per-key queue in recorded order,
         # so a second run through the same instance exhausts it and is reported as
         # divergence. That is strict replay behaving correctly, and it is why
-        # docs/architecture.md says a proxy instance serves one run.
+        # A proxy instance serves one run, by design.
         store = Store(tmp_path / "cassettes")
         with serving(
             ProxyConfig(

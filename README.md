@@ -362,20 +362,6 @@ both, so the effect of that paragraph gets a number instead of an assertion.
   byte-identical on re-run; `provenance` holds what legitimately varies, since a
   first run makes live calls and a replay makes none.
 
-## Documentation
-
-- [Architecture](docs/architecture.md) — components, the cassette tree, request
-  identity, failure modes, and what is deliberately absent.
-- [AI design](docs/ai-design.md) — each AI component, and the places a model is
-  deliberately *not* used (grading, fault generation, the surfaced signal).
-- [Evaluation](docs/evaluation.md) — methodology, exclusion rules, results, and seven
-  threats to validity in order of severity.
-- [Decision records](docs/adr/) — the four decisions that had real alternatives.
-- [`examples/openai_sdk_agent.py`](examples/openai_sdk_agent.py) — a tool-calling
-  agent on the official `openai` SDK, streaming and non-streaming.
-- [`examples/langgraph_agent.py`](examples/langgraph_agent.py) — the same task as a
-  LangGraph agent, pointed at misfeed by one line.
-
 ## Contributing
 
 Issues and pull requests are welcome. `make check` is what CI runs (lint, types,

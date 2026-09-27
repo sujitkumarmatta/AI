@@ -14,10 +14,10 @@ would be unknown.
 
 Whether the agent *surfaced* a problem is a lexicon check over the final message.
 This is a crude signal and is treated as one: the lexicon is published here rather
-than hidden, it is reported separately from correctness and never folded into it,
-and `docs/evaluation.md` carries its measured error against hand labels. A crude
-signal with a known error rate is worth more than a sophisticated one with an
-unknown error rate.
+than hidden, and it is reported separately from correctness and never folded into it.
+Its error against hand labels has not yet been measured, which is stated wherever it
+is used. A crude signal with a knowable error rate is worth more than a sophisticated
+one with an unknown error rate.
 """
 
 from __future__ import annotations
