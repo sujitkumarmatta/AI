@@ -1,0 +1,715 @@
+{
+  "metadata": {
+    "faults": [
+      "empty_success",
+      "partial_list",
+      "missing_fields"
+    ],
+    "models": [
+      "stub/naive",
+      "stub/careful"
+    ],
+    "note": "Upstream is a scripted stand-in. The two stub policies differ by construction: 'naive' uses tool output without checking it, 'careful' validates it first. This shows the harness can tell them apart. It says nothing about any real model.",
+    "store": "evals/cassettes",
+    "tasks": [
+      "T1_shipped_total",
+      "T2_shipped_count"
+    ],
+    "variants": [
+      "baseline"
+    ]
+  },
+  "provenance": {
+    "live_calls": 36,
+    "live_calls_by_trace": {
+      "branch--stub-careful--baseline--T1_shipped_total--s1--empty_success": 1,
+      "branch--stub-careful--baseline--T1_shipped_total--s1--missing_fields": 1,
+      "branch--stub-careful--baseline--T1_shipped_total--s2--empty_success": 1,
+      "branch--stub-careful--baseline--T1_shipped_total--s2--missing_fields": 1,
+      "branch--stub-careful--baseline--T1_shipped_total--s2--partial_list": 1,
+      "branch--stub-careful--baseline--T2_shipped_count--s1--empty_success": 1,
+      "branch--stub-careful--baseline--T2_shipped_count--s1--missing_fields": 1,
+      "branch--stub-careful--baseline--T2_shipped_count--s2--empty_success": 1,
+      "branch--stub-careful--baseline--T2_shipped_count--s2--missing_fields": 1,
+      "branch--stub-careful--baseline--T2_shipped_count--s2--partial_list": 1,
+      "branch--stub-naive--baseline--T1_shipped_total--s1--empty_success": 2,
+      "branch--stub-naive--baseline--T1_shipped_total--s1--missing_fields": 2,
+      "branch--stub-naive--baseline--T1_shipped_total--s2--empty_success": 1,
+      "branch--stub-naive--baseline--T1_shipped_total--s2--missing_fields": 1,
+      "branch--stub-naive--baseline--T1_shipped_total--s2--partial_list": 1,
+      "branch--stub-naive--baseline--T2_shipped_count--s1--empty_success": 2,
+      "branch--stub-naive--baseline--T2_shipped_count--s1--missing_fields": 2,
+      "branch--stub-naive--baseline--T2_shipped_count--s2--empty_success": 1,
+      "branch--stub-naive--baseline--T2_shipped_count--s2--missing_fields": 1,
+      "branch--stub-naive--baseline--T2_shipped_count--s2--partial_list": 1,
+      "trunk--stub-careful--baseline--T1_shipped_total": 3,
+      "trunk--stub-careful--baseline--T2_shipped_count": 3,
+      "trunk--stub-naive--baseline--T1_shipped_total": 3,
+      "trunk--stub-naive--baseline--T2_shipped_count": 3
+    }
+  },
+  "results": {
+    "by_fault": {
+      "empty_success": {
+        "scored": 8,
+        "silent_corruption": 4,
+        "silent_corruption_rate": 0.5
+      },
+      "missing_fields": {
+        "scored": 8,
+        "silent_corruption": 4,
+        "silent_corruption_rate": 0.5
+      },
+      "partial_list": {
+        "scored": 4,
+        "silent_corruption": 4,
+        "silent_corruption_rate": 1.0
+      }
+    },
+    "by_variant": {
+      "stub/careful / baseline": {
+        "model": "stub/careful",
+        "outcomes": {
+          "abstained": 8,
+          "silent_corruption": 2
+        },
+        "scored": 10,
+        "silent_corruption": 2,
+        "silent_corruption_rate": 0.2,
+        "variant": "baseline"
+      },
+      "stub/naive / baseline": {
+        "model": "stub/naive",
+        "outcomes": {
+          "silent_corruption": 10
+        },
+        "scored": 10,
+        "silent_corruption": 10,
+        "silent_corruption_rate": 1.0,
+        "variant": "baseline"
+      }
+    },
+    "precondition_failed": [],
+    "runs": [
+      {
+        "answer": "6725",
+        "expected": 6725,
+        "facts": {
+          "answered": true,
+          "correct": true,
+          "crashed": false,
+          "fault_applied": false,
+          "fault_in_final_context": false,
+          "looped": false,
+          "surfaced": false
+        },
+        "model": "stub/naive",
+        "steps": 3,
+        "task": "T1_shipped_total",
+        "total_tokens": 716,
+        "trace_id": "trunk--stub-naive--baseline--T1_shipped_total",
+        "variant": "baseline"
+      },
+      {
+        "answer": "0",
+        "expected": 6725,
+        "facts": {
+          "answered": true,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": false
+        },
+        "fault": "empty_success",
+        "fault_step": 1,
+        "model": "stub/naive",
+        "outcome": "silent_corruption",
+        "steps": 3,
+        "task": "T1_shipped_total",
+        "total_tokens": 590,
+        "trace_id": "branch--stub-naive--baseline--T1_shipped_total--s1--empty_success",
+        "variant": "baseline"
+      },
+      {
+        "answer": "0",
+        "expected": 6725,
+        "facts": {
+          "answered": true,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": false
+        },
+        "fault": "empty_success",
+        "fault_step": 2,
+        "model": "stub/naive",
+        "outcome": "silent_corruption",
+        "steps": 3,
+        "task": "T1_shipped_total",
+        "total_tokens": 620,
+        "trace_id": "branch--stub-naive--baseline--T1_shipped_total--s2--empty_success",
+        "variant": "baseline"
+      },
+      {
+        "answer": null,
+        "expected": 6725,
+        "fault": "partial_list",
+        "fault_step": 1,
+        "model": "stub/naive",
+        "skipped": "no list in content",
+        "steps": 3,
+        "task": "T1_shipped_total",
+        "total_tokens": 716,
+        "trace_id": "branch--stub-naive--baseline--T1_shipped_total--s1--partial_list",
+        "variant": "baseline"
+      },
+      {
+        "answer": "1250",
+        "expected": 6725,
+        "facts": {
+          "answered": true,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": false
+        },
+        "fault": "partial_list",
+        "fault_step": 2,
+        "model": "stub/naive",
+        "outcome": "silent_corruption",
+        "steps": 3,
+        "task": "T1_shipped_total",
+        "total_tokens": 654,
+        "trace_id": "branch--stub-naive--baseline--T1_shipped_total--s2--partial_list",
+        "variant": "baseline"
+      },
+      {
+        "answer": "0",
+        "expected": 6725,
+        "facts": {
+          "answered": true,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": false
+        },
+        "fault": "missing_fields",
+        "fault_step": 1,
+        "model": "stub/naive",
+        "outcome": "silent_corruption",
+        "steps": 3,
+        "task": "T1_shipped_total",
+        "total_tokens": 614,
+        "trace_id": "branch--stub-naive--baseline--T1_shipped_total--s1--missing_fields",
+        "variant": "baseline"
+      },
+      {
+        "answer": "0",
+        "expected": 6725,
+        "facts": {
+          "answered": true,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": false
+        },
+        "fault": "missing_fields",
+        "fault_step": 2,
+        "model": "stub/naive",
+        "outcome": "silent_corruption",
+        "steps": 3,
+        "task": "T1_shipped_total",
+        "total_tokens": 620,
+        "trace_id": "branch--stub-naive--baseline--T1_shipped_total--s2--missing_fields",
+        "variant": "baseline"
+      },
+      {
+        "answer": "3",
+        "expected": 3,
+        "facts": {
+          "answered": true,
+          "correct": true,
+          "crashed": false,
+          "fault_applied": false,
+          "fault_in_final_context": false,
+          "looped": false,
+          "surfaced": false
+        },
+        "model": "stub/naive",
+        "steps": 3,
+        "task": "T2_shipped_count",
+        "total_tokens": 693,
+        "trace_id": "trunk--stub-naive--baseline--T2_shipped_count",
+        "variant": "baseline"
+      },
+      {
+        "answer": "0",
+        "expected": 3,
+        "facts": {
+          "answered": true,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": false
+        },
+        "fault": "empty_success",
+        "fault_step": 1,
+        "model": "stub/naive",
+        "outcome": "silent_corruption",
+        "steps": 3,
+        "task": "T2_shipped_count",
+        "total_tokens": 567,
+        "trace_id": "branch--stub-naive--baseline--T2_shipped_count--s1--empty_success",
+        "variant": "baseline"
+      },
+      {
+        "answer": "0",
+        "expected": 3,
+        "facts": {
+          "answered": true,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": false
+        },
+        "fault": "empty_success",
+        "fault_step": 2,
+        "model": "stub/naive",
+        "outcome": "silent_corruption",
+        "steps": 3,
+        "task": "T2_shipped_count",
+        "total_tokens": 597,
+        "trace_id": "branch--stub-naive--baseline--T2_shipped_count--s2--empty_success",
+        "variant": "baseline"
+      },
+      {
+        "answer": null,
+        "expected": 3,
+        "fault": "partial_list",
+        "fault_step": 1,
+        "model": "stub/naive",
+        "skipped": "no list in content",
+        "steps": 3,
+        "task": "T2_shipped_count",
+        "total_tokens": 693,
+        "trace_id": "branch--stub-naive--baseline--T2_shipped_count--s1--partial_list",
+        "variant": "baseline"
+      },
+      {
+        "answer": "1",
+        "expected": 3,
+        "facts": {
+          "answered": true,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": false
+        },
+        "fault": "partial_list",
+        "fault_step": 2,
+        "model": "stub/naive",
+        "outcome": "silent_corruption",
+        "steps": 3,
+        "task": "T2_shipped_count",
+        "total_tokens": 631,
+        "trace_id": "branch--stub-naive--baseline--T2_shipped_count--s2--partial_list",
+        "variant": "baseline"
+      },
+      {
+        "answer": "0",
+        "expected": 3,
+        "facts": {
+          "answered": true,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": false
+        },
+        "fault": "missing_fields",
+        "fault_step": 1,
+        "model": "stub/naive",
+        "outcome": "silent_corruption",
+        "steps": 3,
+        "task": "T2_shipped_count",
+        "total_tokens": 591,
+        "trace_id": "branch--stub-naive--baseline--T2_shipped_count--s1--missing_fields",
+        "variant": "baseline"
+      },
+      {
+        "answer": "0",
+        "expected": 3,
+        "facts": {
+          "answered": true,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": false
+        },
+        "fault": "missing_fields",
+        "fault_step": 2,
+        "model": "stub/naive",
+        "outcome": "silent_corruption",
+        "steps": 3,
+        "task": "T2_shipped_count",
+        "total_tokens": 597,
+        "trace_id": "branch--stub-naive--baseline--T2_shipped_count--s2--missing_fields",
+        "variant": "baseline"
+      },
+      {
+        "answer": "6725",
+        "expected": 6725,
+        "facts": {
+          "answered": true,
+          "correct": true,
+          "crashed": false,
+          "fault_applied": false,
+          "fault_in_final_context": false,
+          "looped": false,
+          "surfaced": false
+        },
+        "model": "stub/careful",
+        "steps": 3,
+        "task": "T1_shipped_total",
+        "total_tokens": 716,
+        "trace_id": "trunk--stub-careful--baseline--T1_shipped_total",
+        "variant": "baseline"
+      },
+      {
+        "answer": null,
+        "expected": 6725,
+        "facts": {
+          "answered": false,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": true
+        },
+        "fault": "empty_success",
+        "fault_step": 1,
+        "model": "stub/careful",
+        "outcome": "abstained",
+        "steps": 2,
+        "surfaced_phrases": [
+          "cannot",
+          "empty",
+          "missing"
+        ],
+        "task": "T1_shipped_total",
+        "total_tokens": 348,
+        "trace_id": "branch--stub-careful--baseline--T1_shipped_total--s1--empty_success",
+        "variant": "baseline"
+      },
+      {
+        "answer": null,
+        "expected": 6725,
+        "facts": {
+          "answered": false,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": true
+        },
+        "fault": "empty_success",
+        "fault_step": 2,
+        "model": "stub/careful",
+        "outcome": "abstained",
+        "steps": 3,
+        "surfaced_phrases": [
+          "no rows",
+          "empty",
+          "missing"
+        ],
+        "task": "T1_shipped_total",
+        "total_tokens": 667,
+        "trace_id": "branch--stub-careful--baseline--T1_shipped_total--s2--empty_success",
+        "variant": "baseline"
+      },
+      {
+        "answer": null,
+        "expected": 6725,
+        "fault": "partial_list",
+        "fault_step": 1,
+        "model": "stub/careful",
+        "skipped": "no list in content",
+        "steps": 3,
+        "task": "T1_shipped_total",
+        "total_tokens": 716,
+        "trace_id": "branch--stub-careful--baseline--T1_shipped_total--s1--partial_list",
+        "variant": "baseline"
+      },
+      {
+        "answer": "1250",
+        "expected": 6725,
+        "facts": {
+          "answered": true,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": false
+        },
+        "fault": "partial_list",
+        "fault_step": 2,
+        "model": "stub/careful",
+        "outcome": "silent_corruption",
+        "steps": 3,
+        "task": "T1_shipped_total",
+        "total_tokens": 654,
+        "trace_id": "branch--stub-careful--baseline--T1_shipped_total--s2--partial_list",
+        "variant": "baseline"
+      },
+      {
+        "answer": null,
+        "expected": 6725,
+        "facts": {
+          "answered": false,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": true
+        },
+        "fault": "missing_fields",
+        "fault_step": 1,
+        "model": "stub/careful",
+        "outcome": "abstained",
+        "steps": 2,
+        "surfaced_phrases": [
+          "cannot",
+          "empty",
+          "missing"
+        ],
+        "task": "T1_shipped_total",
+        "total_tokens": 360,
+        "trace_id": "branch--stub-careful--baseline--T1_shipped_total--s1--missing_fields",
+        "variant": "baseline"
+      },
+      {
+        "answer": null,
+        "expected": 6725,
+        "facts": {
+          "answered": false,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": true
+        },
+        "fault": "missing_fields",
+        "fault_step": 2,
+        "model": "stub/careful",
+        "outcome": "abstained",
+        "steps": 3,
+        "surfaced_phrases": [
+          "no rows",
+          "empty",
+          "missing"
+        ],
+        "task": "T1_shipped_total",
+        "total_tokens": 667,
+        "trace_id": "branch--stub-careful--baseline--T1_shipped_total--s2--missing_fields",
+        "variant": "baseline"
+      },
+      {
+        "answer": "3",
+        "expected": 3,
+        "facts": {
+          "answered": true,
+          "correct": true,
+          "crashed": false,
+          "fault_applied": false,
+          "fault_in_final_context": false,
+          "looped": false,
+          "surfaced": false
+        },
+        "model": "stub/careful",
+        "steps": 3,
+        "task": "T2_shipped_count",
+        "total_tokens": 693,
+        "trace_id": "trunk--stub-careful--baseline--T2_shipped_count",
+        "variant": "baseline"
+      },
+      {
+        "answer": null,
+        "expected": 3,
+        "facts": {
+          "answered": false,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": true
+        },
+        "fault": "empty_success",
+        "fault_step": 1,
+        "model": "stub/careful",
+        "outcome": "abstained",
+        "steps": 2,
+        "surfaced_phrases": [
+          "cannot",
+          "empty",
+          "missing"
+        ],
+        "task": "T2_shipped_count",
+        "total_tokens": 334,
+        "trace_id": "branch--stub-careful--baseline--T2_shipped_count--s1--empty_success",
+        "variant": "baseline"
+      },
+      {
+        "answer": null,
+        "expected": 3,
+        "facts": {
+          "answered": false,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": true
+        },
+        "fault": "empty_success",
+        "fault_step": 2,
+        "model": "stub/careful",
+        "outcome": "abstained",
+        "steps": 3,
+        "surfaced_phrases": [
+          "no rows",
+          "empty",
+          "missing"
+        ],
+        "task": "T2_shipped_count",
+        "total_tokens": 646,
+        "trace_id": "branch--stub-careful--baseline--T2_shipped_count--s2--empty_success",
+        "variant": "baseline"
+      },
+      {
+        "answer": null,
+        "expected": 3,
+        "fault": "partial_list",
+        "fault_step": 1,
+        "model": "stub/careful",
+        "skipped": "no list in content",
+        "steps": 3,
+        "task": "T2_shipped_count",
+        "total_tokens": 693,
+        "trace_id": "branch--stub-careful--baseline--T2_shipped_count--s1--partial_list",
+        "variant": "baseline"
+      },
+      {
+        "answer": "1",
+        "expected": 3,
+        "facts": {
+          "answered": true,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": false
+        },
+        "fault": "partial_list",
+        "fault_step": 2,
+        "model": "stub/careful",
+        "outcome": "silent_corruption",
+        "steps": 3,
+        "task": "T2_shipped_count",
+        "total_tokens": 631,
+        "trace_id": "branch--stub-careful--baseline--T2_shipped_count--s2--partial_list",
+        "variant": "baseline"
+      },
+      {
+        "answer": null,
+        "expected": 3,
+        "facts": {
+          "answered": false,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": true
+        },
+        "fault": "missing_fields",
+        "fault_step": 1,
+        "model": "stub/careful",
+        "outcome": "abstained",
+        "steps": 2,
+        "surfaced_phrases": [
+          "cannot",
+          "empty",
+          "missing"
+        ],
+        "task": "T2_shipped_count",
+        "total_tokens": 346,
+        "trace_id": "branch--stub-careful--baseline--T2_shipped_count--s1--missing_fields",
+        "variant": "baseline"
+      },
+      {
+        "answer": null,
+        "expected": 3,
+        "facts": {
+          "answered": false,
+          "correct": false,
+          "crashed": false,
+          "fault_applied": true,
+          "fault_in_final_context": true,
+          "looped": false,
+          "surfaced": true
+        },
+        "fault": "missing_fields",
+        "fault_step": 2,
+        "model": "stub/careful",
+        "outcome": "abstained",
+        "steps": 3,
+        "surfaced_phrases": [
+          "no rows",
+          "empty",
+          "missing"
+        ],
+        "task": "T2_shipped_count",
+        "total_tokens": 646,
+        "trace_id": "branch--stub-careful--baseline--T2_shipped_count--s2--missing_fields",
+        "variant": "baseline"
+      }
+    ],
+    "totals": {
+      "clean_runs": 4,
+      "excluded_not_reached": 0,
+      "fault_runs": 24,
+      "runs": 28,
+      "scored": 20,
+      "skipped_inapplicable": 4,
+      "total_tokens": 17016,
+      "withheld_precondition": 0
+    }
+  },
+  "synthetic": true
+}

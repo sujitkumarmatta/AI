@@ -1,0 +1,1 @@
+{"choices":[{"finish_reason":"stop","index":0,"message":{"content":"Summed the shipped order amounts.\nANSWER: 1250","role":"assistant"}}],"created":0,"id":"stub-5b422cd979fa80f9","model":"stub/naive","object":"chat.completion","usage":{"completion_tokens":20,"prompt_tokens":271,"total_tokens":291}}

@@ -1,0 +1,80 @@
+{
+  "entries": [
+    {
+      "blob": "f772c86e10e91c322daefe7e5a33b9af425ea5bc971659fda4b3f338220bd310",
+      "request": "9e9f2d3b05f89a2f7559a28119f01fe1b059b9cbe0ed886c6db554d50512f05b",
+      "request_key": "9e9f2d3b05f89a2f7559a28119f01fe1b059b9cbe0ed886c6db554d50512f05b",
+      "step": 2
+    }
+  ],
+  "fault": {
+    "fault": "empty_success",
+    "outcome": {
+      "applied": true,
+      "fault": "empty_success",
+      "message_index": 5,
+      "shape": "",
+      "tool_call_id": "call_2",
+      "tool_name": "list_orders",
+      "was_bytes": 336
+    },
+    "params": {}
+  },
+  "fork_step": 2,
+  "id": "branch--stub-careful--baseline--T2_shipped_count--s2--empty_success",
+  "kind": "branch",
+  "meta": {
+    "fault": "empty_success",
+    "live_calls": 1,
+    "model": "stub/careful",
+    "step": 2,
+    "steps": [
+      {
+        "latency_ms": 0.266,
+        "request_key": "8f775dc7f5663adf90f2b6e0e4732ede78daa743e978535fb321b2d421238902",
+        "source": "cassette",
+        "step": 0,
+        "usage": {
+          "completion_tokens": 44,
+          "prompt_tokens": 91,
+          "total_tokens": 135
+        }
+      },
+      {
+        "latency_ms": 0.252,
+        "request_key": "90c4bf0c3bf78175baa81953fa0ce371dc16725fc69da2e71e1c5ccfca632907",
+        "source": "cassette",
+        "step": 1,
+        "usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 167,
+          "total_tokens": 214
+        }
+      },
+      {
+        "fault": {
+          "applied": true,
+          "fault": "empty_success",
+          "message_index": 5,
+          "shape": "",
+          "tool_call_id": "call_2",
+          "tool_name": "list_orders",
+          "was_bytes": 336
+        },
+        "fault_present": true,
+        "latency_ms": 1.109,
+        "request_key": "9e9f2d3b05f89a2f7559a28119f01fe1b059b9cbe0ed886c6db554d50512f05b",
+        "source": "live",
+        "step": 2,
+        "usage": {
+          "completion_tokens": 67,
+          "prompt_tokens": 230,
+          "total_tokens": 297
+        }
+      }
+    ],
+    "task": "T2_shipped_count",
+    "variant": "baseline"
+  },
+  "parent": "trunk--stub-careful--baseline--T2_shipped_count"
+}

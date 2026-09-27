@@ -1,0 +1,65 @@
+{
+  "entries": [
+    {
+      "blob": "19475d7f6c0addb8a32ea6b032b0c9c1b6a095ba5611d8db182745543356be41",
+      "request": "7fa33008c665b1355a85e78577847e95e3d0fe2dbf163274403b83504a9cd919",
+      "request_key": "7fa33008c665b1355a85e78577847e95e3d0fe2dbf163274403b83504a9cd919",
+      "step": 0
+    },
+    {
+      "blob": "92e92f06ea0dd8ad25b6248e896460c551feb6e35ba0f5f656a9bfb81dc9aa3a",
+      "request": "4e3e7b8598e17b8e814a9a2f8f0417657519d2bf5d775f06438895341eda9e1f",
+      "request_key": "4e3e7b8598e17b8e814a9a2f8f0417657519d2bf5d775f06438895341eda9e1f",
+      "step": 1
+    },
+    {
+      "blob": "ef2370e970a87fa091dba9ad5c5b24f6cea002d7cb6a555323793f92722c26ba",
+      "request": "637b1be21f19869b81cd28d27c17f0e89af120912cf7bd42796e2c2bfec7146a",
+      "request_key": "637b1be21f19869b81cd28d27c17f0e89af120912cf7bd42796e2c2bfec7146a",
+      "step": 2
+    }
+  ],
+  "id": "trunk--stub-naive--baseline--T2_shipped_count",
+  "kind": "trunk",
+  "meta": {
+    "live_calls": 3,
+    "model": "stub/naive",
+    "steps": [
+      {
+        "latency_ms": 1.147,
+        "request_key": "7fa33008c665b1355a85e78577847e95e3d0fe2dbf163274403b83504a9cd919",
+        "source": "live",
+        "step": 0,
+        "usage": {
+          "completion_tokens": 44,
+          "prompt_tokens": 91,
+          "total_tokens": 135
+        }
+      },
+      {
+        "latency_ms": 1.049,
+        "request_key": "4e3e7b8598e17b8e814a9a2f8f0417657519d2bf5d775f06438895341eda9e1f",
+        "source": "live",
+        "step": 1,
+        "usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 167,
+          "total_tokens": 214
+        }
+      },
+      {
+        "latency_ms": 1.35,
+        "request_key": "637b1be21f19869b81cd28d27c17f0e89af120912cf7bd42796e2c2bfec7146a",
+        "source": "live",
+        "step": 2,
+        "usage": {
+          "completion_tokens": 18,
+          "prompt_tokens": 326,
+          "total_tokens": 344
+        }
+      }
+    ],
+    "task": "T2_shipped_count",
+    "variant": "baseline"
+  }
+}

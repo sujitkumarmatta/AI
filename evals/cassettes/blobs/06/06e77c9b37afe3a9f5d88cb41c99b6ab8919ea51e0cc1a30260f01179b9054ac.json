@@ -1,0 +1,1 @@
+{"choices":[{"finish_reason":"stop","index":0,"message":{"content":"Counted the shipped orders.\nANSWER: 0","role":"assistant"}}],"created":0,"id":"stub-c1e72c4ca81f95f8","model":"stub/naive","object":"chat.completion","usage":{"completion_tokens":18,"prompt_tokens":217,"total_tokens":235}}

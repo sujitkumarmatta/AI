@@ -1,0 +1,65 @@
+{
+  "entries": [
+    {
+      "blob": "bee3df699c0f630d576fc1a283e0b88435ad18a3982939d13e8dd72ba6620145",
+      "request": "8f775dc7f5663adf90f2b6e0e4732ede78daa743e978535fb321b2d421238902",
+      "request_key": "8f775dc7f5663adf90f2b6e0e4732ede78daa743e978535fb321b2d421238902",
+      "step": 0
+    },
+    {
+      "blob": "76ba5c0f246330562496267d8283624966c99e2f5a9d8633b0af6cc29ed0e281",
+      "request": "90c4bf0c3bf78175baa81953fa0ce371dc16725fc69da2e71e1c5ccfca632907",
+      "request_key": "90c4bf0c3bf78175baa81953fa0ce371dc16725fc69da2e71e1c5ccfca632907",
+      "step": 1
+    },
+    {
+      "blob": "bf5718a4e039584ddcf1d63387991dd583d970fd9fe6de2562f64d4ffea458c4",
+      "request": "8eae8dfd0d512bb673c47416644d57b079b9ba0f846dbccca346f4b3b6c00163",
+      "request_key": "8eae8dfd0d512bb673c47416644d57b079b9ba0f846dbccca346f4b3b6c00163",
+      "step": 2
+    }
+  ],
+  "id": "trunk--stub-careful--baseline--T2_shipped_count",
+  "kind": "trunk",
+  "meta": {
+    "live_calls": 3,
+    "model": "stub/careful",
+    "steps": [
+      {
+        "latency_ms": 1.141,
+        "request_key": "8f775dc7f5663adf90f2b6e0e4732ede78daa743e978535fb321b2d421238902",
+        "source": "live",
+        "step": 0,
+        "usage": {
+          "completion_tokens": 44,
+          "prompt_tokens": 91,
+          "total_tokens": 135
+        }
+      },
+      {
+        "latency_ms": 1.39,
+        "request_key": "90c4bf0c3bf78175baa81953fa0ce371dc16725fc69da2e71e1c5ccfca632907",
+        "source": "live",
+        "step": 1,
+        "usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 167,
+          "total_tokens": 214
+        }
+      },
+      {
+        "latency_ms": 1.207,
+        "request_key": "8eae8dfd0d512bb673c47416644d57b079b9ba0f846dbccca346f4b3b6c00163",
+        "source": "live",
+        "step": 2,
+        "usage": {
+          "completion_tokens": 18,
+          "prompt_tokens": 326,
+          "total_tokens": 344
+        }
+      }
+    ],
+    "task": "T2_shipped_count",
+    "variant": "baseline"
+  }
+}

@@ -8,6 +8,7 @@ and a temporary store.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 
@@ -165,3 +166,111 @@ class TestCassetteShape:
         await run_study(config)
         for path in Path(config.store_root).rglob("*.json"):
             assert "authorization" not in path.read_text().lower()
+
+
+class TestReproducibilityCheck:
+    """The gate CI runs. It has to fail when the cassettes stop reproducing.
+
+    These are synchronous: `main` calls `asyncio.run` itself, which cannot be
+    entered from inside a running loop.
+    """
+
+    def test_passes_on_a_freshly_recorded_study(self, config: StudyConfig) -> None:
+        asyncio.run(run_study(config))
+        assert (
+            study_module.main(
+                [
+                    "--store",
+                    str(config.store_root),
+                    "--report",
+                    str(config.report_path),
+                    "--check",
+                ]
+            )
+            == 0
+        )
+
+    def test_fails_when_a_recorded_response_is_tampered_with(self, config: StudyConfig) -> None:
+        summary = asyncio.run(run_study(config))
+        store = Store(config.store_root)
+        trace_id = next(
+            run["trace_id"]
+            for run in summary["results"]["runs"]
+            if run.get("outcome") == "silent_corruption"
+        )
+        last = store.resolve(trace_id)[-1]
+        blob = store.get_blob(last.blob)
+        blob["choices"][0]["message"]["content"] = "ANSWER: 6725"
+        path = store._blob_path(last.blob)
+        path.write_text(json.dumps(blob, sort_keys=True), encoding="utf-8")
+
+        assert (
+            study_module.main(
+                [
+                    "--store",
+                    str(config.store_root),
+                    "--report",
+                    str(config.report_path),
+                    "--check",
+                ]
+            )
+            == 1
+        )
+
+    def test_fails_when_there_is_no_committed_report(self, config: StudyConfig) -> None:
+        assert (
+            study_module.main(
+                [
+                    "--store",
+                    str(config.store_root),
+                    "--report",
+                    str(config.report_path),
+                    "--check",
+                ]
+            )
+            == 1
+        )
+
+
+class TestProvenanceFlag:
+    """`synthetic` must survive a replay, which needs no endpoint.
+
+    The real-model path itself cannot be exercised here: recording against a real
+    endpoint needs an endpoint. What is tested is that replaying a study does not
+    silently relabel its provenance, which is the part that could go wrong without
+    anyone noticing.
+    """
+
+    def test_derived_from_whether_an_upstream_was_given(self, tmp_path: Path) -> None:
+        stub = StudyConfig(store_root=tmp_path, report_path=tmp_path / "r.json")
+        assert stub.synthetic is True
+        real = StudyConfig(
+            store_root=tmp_path,
+            report_path=tmp_path / "r.json",
+            upstream_base_url="https://api.example/v1",
+            model="some-model",
+        )
+        assert real.synthetic is False
+
+    def test_override_wins_so_a_replay_keeps_its_provenance(self, tmp_path: Path) -> None:
+        replayed = StudyConfig(
+            store_root=tmp_path,
+            report_path=tmp_path / "r.json",
+            upstream_base_url=None,
+            model="some-model",
+            synthetic_override=False,
+        )
+        assert replayed.synthetic is False
+
+    def test_a_named_model_displaces_the_stub(self, tmp_path: Path) -> None:
+        real = StudyConfig(
+            store_root=tmp_path,
+            report_path=tmp_path / "r.json",
+            upstream_base_url="https://api.example/v1",
+            model="some-model",
+        )
+        assert real.agents == (("some-model", None),)
+
+    def test_stub_policies_become_the_agent_dimension(self, tmp_path: Path) -> None:
+        stub = StudyConfig(store_root=tmp_path, report_path=tmp_path / "r.json")
+        assert stub.agents == (("stub/naive", "naive"), ("stub/careful", "careful"))

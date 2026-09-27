@@ -14,9 +14,11 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import difflib
 import json
+import tempfile
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -59,16 +61,24 @@ class StudyConfig:
     upstream_api_key: str | None = None
     model: str | None = None
 
+    # Normally derived from whether an upstream was given. Set explicitly when
+    # replaying a recorded study, where no upstream is needed but the recording's
+    # provenance must be preserved -- a replay of a real-model study is still a
+    # real-model study.
+    synthetic_override: bool | None = None
+
     @property
     def synthetic(self) -> bool:
-        """True while the upstream is a stand-in rather than a model."""
+        """Whether the upstream was a stand-in rather than a model."""
+        if self.synthetic_override is not None:
+            return self.synthetic_override
         return self.upstream_base_url is None
 
     @property
     def agents(self) -> tuple[tuple[str, str | None], ...]:
-        """(model name, stub policy) pairs to run."""
-        if not self.synthetic:
-            return ((self.model or "unknown", None),)
+        """(model name, stub policy) pairs to run. A None policy means no stub."""
+        if self.model is not None:
+            return ((self.model, None),)
         return tuple((f"stub/{policy}", policy) for policy in self.stub_policies)
 
 
@@ -115,8 +125,9 @@ class Study:
         """
         config = self.config
         if policy is None:
-            assert config.upstream_base_url is not None
-            return None, config.upstream_base_url
+            # No stub. Either a real upstream, or a replay that needs none -- in
+            # which case any live call is a bug the engine will raise on.
+            return None, config.upstream_base_url or "http://replay-only"
 
         def build() -> httpx2.AsyncClient:
             return httpx2.AsyncClient(
@@ -327,6 +338,14 @@ def main(argv: list[str] | None = None) -> int:
         help="System-prompt variant; repeatable. Only informative against a real model.",
     )
     parser.add_argument("--max-live-requests", type=int, default=200)
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help=(
+            "Re-run from existing cassettes and fail unless the results match the "
+            "committed report exactly and no live call was made."
+        ),
+    )
     args = parser.parse_args(argv)
 
     config = StudyConfig(
@@ -339,9 +358,81 @@ def main(argv: list[str] | None = None) -> int:
         model=args.model,
         max_live_requests=args.max_live_requests,
     )
+    if args.check:
+        return _check(config)
+
     summary = asyncio.run(run_study(config))
     print(markdown_report(summary))
     print(f"report: {args.report}")
+    return 0
+
+
+def _check(config: StudyConfig) -> int:
+    """Verify the committed report reproduces from the committed cassettes.
+
+    Two conditions, both required. The results must match byte for byte, and the
+    re-run must make no live calls -- a run that quietly reached an upstream to
+    fill a gap would reproduce the numbers while proving nothing about whether
+    someone else could.
+
+    The study is rebuilt from the report's own metadata rather than from CLI
+    defaults. Otherwise the check compares a committed report against a
+    differently configured study and fails for the wrong reason, or worse, passes
+    for one.
+    """
+    if not config.report_path.exists():
+        print(f"no committed report at {config.report_path}; run the study first")
+        return 1
+    committed = json.loads(config.report_path.read_text())
+    metadata = committed.get("metadata", {})
+    models: list[str] = list(metadata.get("models", []))
+    stub_policies = tuple(model.split("/", 1)[1] for model in models if model.startswith("stub/"))
+    real_models = [model for model in models if not model.startswith("stub/")]
+
+    with tempfile.TemporaryDirectory() as tmp:
+        scratch = replace(
+            config,
+            report_path=Path(tmp) / "report.json",
+            faults=tuple(metadata.get("faults", config.faults)),
+            variants=tuple(metadata.get("variants", config.variants)),
+            stub_policies=stub_policies or config.stub_policies,
+            model=real_models[0] if real_models else None,
+            # A replay needs no upstream. Leaving this set would let a gap in the
+            # cassettes be filled by a live call instead of failing the check.
+            upstream_base_url=None,
+            upstream_api_key=None,
+            # Preserve the recording's provenance: a replay of a real-model study
+            # is still a real-model study, even though the replay needs no
+            # endpoint.
+            synthetic_override=bool(committed.get("synthetic", True)),
+        )
+        fresh = asyncio.run(run_study(scratch))
+
+    problems: list[str] = []
+    if committed.get("synthetic") != fresh.get("synthetic"):
+        problems.append(
+            f"synthetic flag changed: committed {committed.get('synthetic')!r}, "
+            f"replayed {fresh.get('synthetic')!r}"
+        )
+    if fresh["provenance"]["live_calls"] != 0:
+        problems.append(
+            f"replay made {fresh['provenance']['live_calls']} live call(s); the "
+            f"committed cassettes are incomplete"
+        )
+    expected = json.dumps(committed["results"], indent=2, sort_keys=True).splitlines()
+    actual = json.dumps(fresh["results"], indent=2, sort_keys=True).splitlines()
+    if expected != actual:
+        diff = list(
+            difflib.unified_diff(expected, actual, "committed", "replayed", lineterm="", n=2)
+        )
+        problems.append("results differ from the committed report:")
+        problems.extend(diff[:40])
+
+    if problems:
+        print("\n".join(problems))
+        return 1
+    scored = committed["results"]["totals"]["scored"]
+    print(f"reproduced {scored} scored runs from committed cassettes, 0 live calls")
     return 0
 
 

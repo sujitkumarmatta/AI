@@ -1,0 +1,65 @@
+{
+  "entries": [
+    {
+      "blob": "269b50adc96319ab901f918890860079f4f502c962af7b99a2139ee741d9fd75",
+      "request": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
+      "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
+      "step": 0
+    },
+    {
+      "blob": "70a895eb5788aa5418372945f4552f5ebce11f000a8995d4bd7c418167587d5d",
+      "request": "52499d4adb72a7a05be70b1472484973342064955fa14f55f7cd230d9c699090",
+      "request_key": "52499d4adb72a7a05be70b1472484973342064955fa14f55f7cd230d9c699090",
+      "step": 1
+    },
+    {
+      "blob": "e63b241bf73003f2f0aeb5c4bb712cca067ec5e368bc561d788467fe488a9e1f",
+      "request": "78c2d22254da66039829db16ff169ca51a287c926fbc82f71c1c022b7be5f84d",
+      "request_key": "78c2d22254da66039829db16ff169ca51a287c926fbc82f71c1c022b7be5f84d",
+      "step": 2
+    }
+  ],
+  "id": "trunk--stub-careful--baseline--T1_shipped_total",
+  "kind": "trunk",
+  "meta": {
+    "live_calls": 3,
+    "model": "stub/careful",
+    "steps": [
+      {
+        "latency_ms": 1.129,
+        "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
+        "source": "live",
+        "step": 0,
+        "usage": {
+          "completion_tokens": 44,
+          "prompt_tokens": 98,
+          "total_tokens": 142
+        }
+      },
+      {
+        "latency_ms": 1.225,
+        "request_key": "52499d4adb72a7a05be70b1472484973342064955fa14f55f7cd230d9c699090",
+        "source": "live",
+        "step": 1,
+        "usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 174,
+          "total_tokens": 221
+        }
+      },
+      {
+        "latency_ms": 1.204,
+        "request_key": "78c2d22254da66039829db16ff169ca51a287c926fbc82f71c1c022b7be5f84d",
+        "source": "live",
+        "step": 2,
+        "usage": {
+          "completion_tokens": 20,
+          "prompt_tokens": 333,
+          "total_tokens": 353
+        }
+      }
+    ],
+    "task": "T1_shipped_total",
+    "variant": "baseline"
+  }
+}

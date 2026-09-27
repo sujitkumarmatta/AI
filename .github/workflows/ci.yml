@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - run: uv sync --frozen
+
+      - name: lint
+        run: uv run ruff check . && uv run ruff format --check .
+
+      - name: types
+        run: uv run mypy
+
+      # No API keys are configured for this job on purpose. The suite and the
+      # reproducibility gate must pass with no endpoint reachable, which is the
+      # project's central claim; a job with credentials could not prove it.
+      - name: tests
+        run: uv run pytest -q
+
+      - name: committed results reproduce from committed cassettes
+        run: uv run python -m evals.study --check
