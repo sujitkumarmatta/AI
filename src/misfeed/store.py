@@ -42,18 +42,39 @@ class CassetteMiss(LookupError):
 
 @dataclass(frozen=True, slots=True)
 class Entry:
-    """One recorded exchange: a request key and the blob holding its response."""
+    """One recorded exchange.
+
+    `request` holds the blob digest of the canonical request. It is optional so
+    that a cassette can be written without retaining prompts, but it is populated
+    by default: committed cassettes are reviewed by people, and a file of bare
+    hashes cannot be reviewed or diagnosed. The consequence is that a cassette
+    contains the prompts it was recorded from, which is why recording over
+    sensitive data and then committing it is called out in the docs.
+    """
 
     step: int
     request_key: str
     blob: str
+    request: str | None = None
 
     def to_json(self) -> dict[str, Any]:
-        return {"step": self.step, "request_key": self.request_key, "blob": self.blob}
+        out: dict[str, Any] = {
+            "step": self.step,
+            "request_key": self.request_key,
+            "blob": self.blob,
+        }
+        if self.request is not None:
+            out["request"] = self.request
+        return out
 
     @staticmethod
     def from_json(raw: dict[str, Any]) -> Entry:
-        return Entry(step=int(raw["step"]), request_key=raw["request_key"], blob=raw["blob"])
+        return Entry(
+            step=int(raw["step"]),
+            request_key=raw["request_key"],
+            blob=raw["blob"],
+            request=raw.get("request"),
+        )
 
 
 @dataclass(slots=True)
