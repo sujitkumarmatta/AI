@@ -30,7 +30,7 @@
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.234,
+        "latency_ms": 0.334,
         "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
         "source": "cassette",
         "step": 0,
@@ -51,7 +51,7 @@
           "was_bytes": 58
         },
         "fault_present": true,
-        "latency_ms": 0.974,
+        "latency_ms": 0.942,
         "request_key": "28db55b0b503a45705b02913b3f485fa6e9e373c448a52b98bad02ce6fbf7615",
         "source": "live",
         "step": 1,

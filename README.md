@@ -133,26 +133,57 @@ Reproduce with `make eval`. Source: [`evals/report.json`](evals/report.json).
 
 | model / prompt | scored runs | silent corruption | rate |
 | --- | --- | --- | --- |
-| stub/careful / baseline | 10 | 2 | 20.0% |
-| stub/naive / baseline | 10 | 10 | 100.0% |
+| stub/careful / baseline | 32 | 3 | 9.4% |
+| stub/naive / baseline | 32 | 28 | 87.5% |
 
 | fault | scored runs | silent corruption | rate |
 | --- | --- | --- | --- |
-| `empty_success` | 8 | 4 | 50.0% |
-| `missing_fields` | 8 | 4 | 50.0% |
 | `partial_list` | 4 | 4 | 100.0% |
+| `empty_success` | 8 | 4 | 50.0% |
+| `error_text` | 8 | 4 | 50.0% |
+| `injected_instruction` | 8 | 4 | 50.0% |
+| `missing_fields` | 8 | 4 | 50.0% |
+| `truncated` | 8 | 4 | 50.0% |
+| `unit_shift` | 8 | 4 | 50.0% |
+| `schema_drift` | 8 | 3 | 37.5% |
+| `stale` | 4 | 0 | 0.0% |
 
-20 of 24 fault runs scored; 4 skipped because the fault did not apply to the tool
+64 of 72 fault runs scored; 8 skipped because the fault did not apply to the tool
 result at that step.
 
-One row is worth reading twice. **`partial_list` defeats the careful policy as
-thoroughly as the naive one.** A silently shortened list is well-formed and
-plausible, so validating that a result is present and correctly shaped cannot
-catch it. Defensive validation stops empty and malformed payloads, not incomplete
-ones. That was not designed in; it fell out of running the study.
+### What the fault breakdown shows
 
-Replay cost, from [`evals/bench-replay.json`](evals/bench-replay.json)
-(600 requests, this machine): p50 0.22 ms, p95 0.36 ms per served response.
+Read by what each fault does to the payload rather than by name, the nine classes
+fall into three groups — and the careful policy, which validates every tool result
+before using it, behaves completely differently across them:
+
+| what the fault does to the data | faults | careful policy |
+| --- | --- | --- |
+| makes it **absent or malformed** | `empty_success`, `error_text`, `missing_fields`, `truncated`, `injected_instruction` | abstains every time: 0 silent corruptions |
+| leaves it **plausible but wrong** | `partial_list`, `unit_shift` | still silently corrupts |
+| doesn't affect the answer | `stale` | correctly unaffected, as is the naive policy |
+
+**Validation defeats absence. It does not defeat plausibility.** Checking that a
+tool result is present and correctly shaped catches an empty payload, an error
+string, a missing field and a truncated structure. It cannot catch a list that was
+silently shortened or an amount that arrived in the wrong unit, because those are
+well-formed and look right. The naive and careful policies are indistinguishable
+on exactly those faults.
+
+The third group matters too: `stale` shifts every date backwards and changes
+nothing, because neither task's answer depends on a date. A harness that only
+injected faults it knew would bite could not tell you which faults are harmless —
+so `stale` being 0% is a result, not a gap.
+
+None of this is a claim about real models. It is a claim about what defensive
+validation can and cannot do, demonstrated on an agent whose validation is fully
+known because it is 40 lines of scripted Python.
+
+Replay is sub-millisecond per served response — p95 under 0.4 ms across 600
+requests, so a study of thousands of experiments is bounded by the recording pass,
+not the replay. Exact figures, which are machine-dependent, are in
+[`evals/bench-replay.json`](evals/bench-replay.json); regenerate with
+`uv run python scripts/bench_replay.py`.
 
 ## Measuring a real model
 

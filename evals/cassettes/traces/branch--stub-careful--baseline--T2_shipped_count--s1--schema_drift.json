@@ -1,0 +1,71 @@
+{
+  "entries": [
+    {
+      "blob": "1e9c77f00e490709c836ef897a782e4e67520fc4b6688024bfd1899f549610ad",
+      "request": "c7bdcbf1df4fb64f941ff1de5b85c3ae66f8b9113b9d970b13b870cc0d31b67c",
+      "request_key": "c7bdcbf1df4fb64f941ff1de5b85c3ae66f8b9113b9d970b13b870cc0d31b67c",
+      "step": 1
+    }
+  ],
+  "fault": {
+    "fault": "schema_drift",
+    "outcome": {
+      "applied": true,
+      "fault": "schema_drift",
+      "message_index": 3,
+      "renamed": {
+        "customer_id": "customerId"
+      },
+      "tool_call_id": "call_1",
+      "tool_name": "find_customer"
+    },
+    "params": {}
+  },
+  "fork_step": 1,
+  "id": "branch--stub-careful--baseline--T2_shipped_count--s1--schema_drift",
+  "kind": "branch",
+  "meta": {
+    "fault": "schema_drift",
+    "live_calls": 1,
+    "model": "stub/careful",
+    "step": 1,
+    "steps": [
+      {
+        "latency_ms": 0.237,
+        "request_key": "8f775dc7f5663adf90f2b6e0e4732ede78daa743e978535fb321b2d421238902",
+        "source": "cassette",
+        "step": 0,
+        "usage": {
+          "completion_tokens": 44,
+          "prompt_tokens": 91,
+          "total_tokens": 135
+        }
+      },
+      {
+        "fault": {
+          "applied": true,
+          "fault": "schema_drift",
+          "message_index": 3,
+          "renamed": {
+            "customer_id": "customerId"
+          },
+          "tool_call_id": "call_1",
+          "tool_name": "find_customer"
+        },
+        "fault_present": true,
+        "latency_ms": 1.094,
+        "request_key": "c7bdcbf1df4fb64f941ff1de5b85c3ae66f8b9113b9d970b13b870cc0d31b67c",
+        "source": "live",
+        "step": 1,
+        "usage": {
+          "completion_tokens": 49,
+          "prompt_tokens": 167,
+          "total_tokens": 216
+        }
+      }
+    ],
+    "task": "T2_shipped_count",
+    "variant": "baseline"
+  },
+  "parent": "trunk--stub-careful--baseline--T2_shipped_count"
+}

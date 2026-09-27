@@ -31,7 +31,7 @@
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.224,
+        "latency_ms": 0.234,
         "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
         "source": "cassette",
         "step": 0,
@@ -53,7 +53,7 @@
           "tool_name": "find_customer"
         },
         "fault_present": true,
-        "latency_ms": 1.026,
+        "latency_ms": 1.015,
         "request_key": "0c111467aa6ee9c34c963d4b14a39be52ab6c3128a6aa758999cded4ce8bb4b0",
         "source": "live",
         "step": 1,

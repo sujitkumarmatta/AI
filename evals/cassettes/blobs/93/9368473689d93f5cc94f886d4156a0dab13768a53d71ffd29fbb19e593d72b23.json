@@ -1,0 +1,1 @@
+{"choices":[{"finish_reason":"stop","index":0,"message":{"content":"Some order records are missing the amount_cents field, so the total would be incomplete. I cannot give a reliable figure.","role":"assistant"}}],"created":0,"id":"stub-aff0d352e0d25446","model":"stub/careful","object":"chat.completion","usage":{"completion_tokens":39,"prompt_tokens":331,"total_tokens":370}}

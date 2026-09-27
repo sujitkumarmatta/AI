@@ -1,0 +1,106 @@
+{
+  "entries": [
+    {
+      "blob": "8ca38b89fde1dfc4af8afd1f1302ca6388ba734774ddf85213fb37875b335219",
+      "request": "e5d32e84d6b4b53b767776703ae23c61ee3fb7a5c352656b3e9314d236800cd0",
+      "request_key": "e5d32e84d6b4b53b767776703ae23c61ee3fb7a5c352656b3e9314d236800cd0",
+      "step": 2
+    }
+  ],
+  "fault": {
+    "fault": "stale",
+    "outcome": {
+      "applied": true,
+      "fault": "stale",
+      "message_index": 5,
+      "shift_days": 30,
+      "shifted": [
+        {
+          "from": "2026-03-04",
+          "to": "2026-02-02"
+        },
+        {
+          "from": "2026-04-11",
+          "to": "2026-03-12"
+        },
+        {
+          "from": "2026-06-19",
+          "to": "2026-05-20"
+        }
+      ],
+      "tool_call_id": "call_2",
+      "tool_name": "list_orders"
+    },
+    "params": {}
+  },
+  "fork_step": 2,
+  "id": "branch--stub-careful--baseline--T1_shipped_total--s2--stale",
+  "kind": "branch",
+  "meta": {
+    "fault": "stale",
+    "live_calls": 1,
+    "model": "stub/careful",
+    "step": 2,
+    "steps": [
+      {
+        "latency_ms": 0.273,
+        "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
+        "source": "cassette",
+        "step": 0,
+        "usage": {
+          "completion_tokens": 44,
+          "prompt_tokens": 98,
+          "total_tokens": 142
+        }
+      },
+      {
+        "latency_ms": 0.347,
+        "request_key": "52499d4adb72a7a05be70b1472484973342064955fa14f55f7cd230d9c699090",
+        "source": "cassette",
+        "step": 1,
+        "usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 174,
+          "total_tokens": 221
+        }
+      },
+      {
+        "fault": {
+          "applied": true,
+          "fault": "stale",
+          "message_index": 5,
+          "shift_days": 30,
+          "shifted": [
+            {
+              "from": "2026-03-04",
+              "to": "2026-02-02"
+            },
+            {
+              "from": "2026-04-11",
+              "to": "2026-03-12"
+            },
+            {
+              "from": "2026-06-19",
+              "to": "2026-05-20"
+            }
+          ],
+          "tool_call_id": "call_2",
+          "tool_name": "list_orders"
+        },
+        "fault_present": true,
+        "latency_ms": 1.269,
+        "request_key": "e5d32e84d6b4b53b767776703ae23c61ee3fb7a5c352656b3e9314d236800cd0",
+        "source": "live",
+        "step": 2,
+        "usage": {
+          "completion_tokens": 20,
+          "prompt_tokens": 333,
+          "total_tokens": 353
+        }
+      }
+    ],
+    "task": "T1_shipped_total",
+    "variant": "baseline"
+  },
+  "parent": "trunk--stub-careful--baseline--T1_shipped_total"
+}

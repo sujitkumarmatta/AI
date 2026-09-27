@@ -37,7 +37,7 @@
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.225,
+        "latency_ms": 0.331,
         "request_key": "7fa33008c665b1355a85e78577847e95e3d0fe2dbf163274403b83504a9cd919",
         "source": "cassette",
         "step": 0,
@@ -59,7 +59,7 @@
           "tool_name": "find_customer"
         },
         "fault_present": true,
-        "latency_ms": 1.015,
+        "latency_ms": 0.953,
         "request_key": "84fb719ceb2a46d3222308ca4ac8ab6b2302e6e151b0d1fb5d9a66e0910335be",
         "source": "live",
         "step": 1,
@@ -71,7 +71,7 @@
       },
       {
         "fault_present": true,
-        "latency_ms": 0.91,
+        "latency_ms": 0.87,
         "request_key": "8481fd246608e4760824406514b2581ecbaedd80aad29bd39d72b38042b0d482",
         "source": "live",
         "step": 2,

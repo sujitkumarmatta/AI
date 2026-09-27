@@ -1,0 +1,80 @@
+{
+  "entries": [
+    {
+      "blob": "b3035f60910b7b98aee4b28345db926c57362f8edfbc7859c825c48a91308f0b",
+      "request": "35b3247be14a688dee49fbf17aeec25d83b049623665211de65bcefbc2d69229",
+      "request_key": "35b3247be14a688dee49fbf17aeec25d83b049623665211de65bcefbc2d69229",
+      "step": 2
+    }
+  ],
+  "fault": {
+    "fault": "error_text",
+    "outcome": {
+      "applied": true,
+      "fault": "error_text",
+      "message_index": 5,
+      "text": "Error: upstream service unavailable (503)",
+      "tool_call_id": "call_2",
+      "tool_name": "list_orders",
+      "was_bytes": 336
+    },
+    "params": {}
+  },
+  "fork_step": 2,
+  "id": "branch--stub-naive--baseline--T2_shipped_count--s2--error_text",
+  "kind": "branch",
+  "meta": {
+    "fault": "error_text",
+    "live_calls": 1,
+    "model": "stub/naive",
+    "step": 2,
+    "steps": [
+      {
+        "latency_ms": 0.27,
+        "request_key": "7fa33008c665b1355a85e78577847e95e3d0fe2dbf163274403b83504a9cd919",
+        "source": "cassette",
+        "step": 0,
+        "usage": {
+          "completion_tokens": 44,
+          "prompt_tokens": 91,
+          "total_tokens": 135
+        }
+      },
+      {
+        "latency_ms": 0.26,
+        "request_key": "4e3e7b8598e17b8e814a9a2f8f0417657519d2bf5d775f06438895341eda9e1f",
+        "source": "cassette",
+        "step": 1,
+        "usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 167,
+          "total_tokens": 214
+        }
+      },
+      {
+        "fault": {
+          "applied": true,
+          "fault": "error_text",
+          "message_index": 5,
+          "text": "Error: upstream service unavailable (503)",
+          "tool_call_id": "call_2",
+          "tool_name": "list_orders",
+          "was_bytes": 336
+        },
+        "fault_present": true,
+        "latency_ms": 1.113,
+        "request_key": "35b3247be14a688dee49fbf17aeec25d83b049623665211de65bcefbc2d69229",
+        "source": "live",
+        "step": 2,
+        "usage": {
+          "completion_tokens": 18,
+          "prompt_tokens": 240,
+          "total_tokens": 258
+        }
+      }
+    ],
+    "task": "T2_shipped_count",
+    "variant": "baseline"
+  },
+  "parent": "trunk--stub-naive--baseline--T2_shipped_count"
+}

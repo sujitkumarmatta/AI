@@ -36,7 +36,7 @@
     "step": 1,
     "steps": [
       {
-        "latency_ms": 0.237,
+        "latency_ms": 0.23,
         "request_key": "7fa33008c665b1355a85e78577847e95e3d0fe2dbf163274403b83504a9cd919",
         "source": "cassette",
         "step": 0,
@@ -57,7 +57,7 @@
           "was_bytes": 58
         },
         "fault_present": true,
-        "latency_ms": 1.047,
+        "latency_ms": 0.998,
         "request_key": "5fe1a2ec7c56140df98db53e63f56287de52b3539986f8490f7699ac8de0635c",
         "source": "live",
         "step": 1,
@@ -69,7 +69,7 @@
       },
       {
         "fault_present": true,
-        "latency_ms": 0.914,
+        "latency_ms": 0.838,
         "request_key": "0d595f7eeb8f28d2b8593b6e7aecf74ddf0f23b71ccbe074cfba08226ea78736",
         "source": "live",
         "step": 2,

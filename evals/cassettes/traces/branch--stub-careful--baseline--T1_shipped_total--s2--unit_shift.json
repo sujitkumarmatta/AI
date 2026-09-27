@@ -1,0 +1,142 @@
+{
+  "entries": [
+    {
+      "blob": "e0f077830151167611870a47f315b5500c983244dd64e41eca95902fdb796a5f",
+      "request": "49f9fd7be5ac4f6e756b464ea5927c333afbc84ef57f0eb8a52c0e8870d8af00",
+      "request_key": "49f9fd7be5ac4f6e756b464ea5927c333afbc84ef57f0eb8a52c0e8870d8af00",
+      "step": 2
+    }
+  ],
+  "fault": {
+    "fault": "unit_shift",
+    "outcome": {
+      "applied": true,
+      "factor": 100.0,
+      "fault": "unit_shift",
+      "message_index": 5,
+      "scaled": [
+        {
+          "from": 101,
+          "key": "order_id",
+          "to": 10100
+        },
+        {
+          "from": 1250,
+          "key": "amount_cents",
+          "to": 125000
+        },
+        {
+          "from": 102,
+          "key": "order_id",
+          "to": 10200
+        },
+        {
+          "from": 3400,
+          "key": "amount_cents",
+          "to": 340000
+        },
+        {
+          "from": 104,
+          "key": "order_id",
+          "to": 10400
+        },
+        {
+          "from": 2075,
+          "key": "amount_cents",
+          "to": 207500
+        }
+      ],
+      "tool_call_id": "call_2",
+      "tool_name": "list_orders"
+    },
+    "params": {}
+  },
+  "fork_step": 2,
+  "id": "branch--stub-careful--baseline--T1_shipped_total--s2--unit_shift",
+  "kind": "branch",
+  "meta": {
+    "fault": "unit_shift",
+    "live_calls": 1,
+    "model": "stub/careful",
+    "step": 2,
+    "steps": [
+      {
+        "latency_ms": 0.24,
+        "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
+        "source": "cassette",
+        "step": 0,
+        "usage": {
+          "completion_tokens": 44,
+          "prompt_tokens": 98,
+          "total_tokens": 142
+        }
+      },
+      {
+        "latency_ms": 0.262,
+        "request_key": "52499d4adb72a7a05be70b1472484973342064955fa14f55f7cd230d9c699090",
+        "source": "cassette",
+        "step": 1,
+        "usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 174,
+          "total_tokens": 221
+        }
+      },
+      {
+        "fault": {
+          "applied": true,
+          "factor": 100.0,
+          "fault": "unit_shift",
+          "message_index": 5,
+          "scaled": [
+            {
+              "from": 101,
+              "key": "order_id",
+              "to": 10100
+            },
+            {
+              "from": 1250,
+              "key": "amount_cents",
+              "to": 125000
+            },
+            {
+              "from": 102,
+              "key": "order_id",
+              "to": 10200
+            },
+            {
+              "from": 3400,
+              "key": "amount_cents",
+              "to": 340000
+            },
+            {
+              "from": 104,
+              "key": "order_id",
+              "to": 10400
+            },
+            {
+              "from": 2075,
+              "key": "amount_cents",
+              "to": 207500
+            }
+          ],
+          "tool_call_id": "call_2",
+          "tool_name": "list_orders"
+        },
+        "fault_present": true,
+        "latency_ms": 1.123,
+        "request_key": "49f9fd7be5ac4f6e756b464ea5927c333afbc84ef57f0eb8a52c0e8870d8af00",
+        "source": "live",
+        "step": 2,
+        "usage": {
+          "completion_tokens": 21,
+          "prompt_tokens": 336,
+          "total_tokens": 357
+        }
+      }
+    ],
+    "task": "T1_shipped_total",
+    "variant": "baseline"
+  },
+  "parent": "trunk--stub-careful--baseline--T1_shipped_total"
+}

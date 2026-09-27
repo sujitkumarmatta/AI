@@ -1,0 +1,71 @@
+{
+  "entries": [
+    {
+      "blob": "2e93e73dd09f0091a91559393026b833a8498a557db183448f5da7cb8dfd305c",
+      "request": "333248f6c789a18af18338b90bfbe531f3af6ba6cf70984a3912c5425b5ee7be",
+      "request_key": "333248f6c789a18af18338b90bfbe531f3af6ba6cf70984a3912c5425b5ee7be",
+      "step": 1
+    }
+  ],
+  "fault": {
+    "fault": "schema_drift",
+    "outcome": {
+      "applied": true,
+      "fault": "schema_drift",
+      "message_index": 3,
+      "renamed": {
+        "customer_id": "customerId"
+      },
+      "tool_call_id": "call_1",
+      "tool_name": "find_customer"
+    },
+    "params": {}
+  },
+  "fork_step": 1,
+  "id": "branch--stub-careful--baseline--T1_shipped_total--s1--schema_drift",
+  "kind": "branch",
+  "meta": {
+    "fault": "schema_drift",
+    "live_calls": 1,
+    "model": "stub/careful",
+    "step": 1,
+    "steps": [
+      {
+        "latency_ms": 0.278,
+        "request_key": "21b6d71a3ab69af5ad4bbad5cb1f457e1836e5f86b77a66c179c779dbf4f44cd",
+        "source": "cassette",
+        "step": 0,
+        "usage": {
+          "completion_tokens": 44,
+          "prompt_tokens": 98,
+          "total_tokens": 142
+        }
+      },
+      {
+        "fault": {
+          "applied": true,
+          "fault": "schema_drift",
+          "message_index": 3,
+          "renamed": {
+            "customer_id": "customerId"
+          },
+          "tool_call_id": "call_1",
+          "tool_name": "find_customer"
+        },
+        "fault_present": true,
+        "latency_ms": 1.098,
+        "request_key": "333248f6c789a18af18338b90bfbe531f3af6ba6cf70984a3912c5425b5ee7be",
+        "source": "live",
+        "step": 1,
+        "usage": {
+          "completion_tokens": 49,
+          "prompt_tokens": 174,
+          "total_tokens": 223
+        }
+      }
+    ],
+    "task": "T1_shipped_total",
+    "variant": "baseline"
+  },
+  "parent": "trunk--stub-careful--baseline--T1_shipped_total"
+}

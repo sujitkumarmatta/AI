@@ -1,0 +1,87 @@
+{
+  "entries": [
+    {
+      "blob": "34ff18e80e6d2c1889a07b5998d24cd598a2672ce38339d79db311cd03f00f51",
+      "request": "f2ed248c71b47d783e4a7abc5820ae6bbafc40fe1ae7780e4ace94ccf777cc87",
+      "request_key": "f2ed248c71b47d783e4a7abc5820ae6bbafc40fe1ae7780e4ace94ccf777cc87",
+      "step": 1
+    },
+    {
+      "blob": "be2450ca34b16007309cbbeb1d516ef5dfefe5b4f93ac9f80fad32469140bc6d",
+      "request": "9dcd548f0620e5c8288d7000c8db16f207fbaf53ecf5cdd95333683a0079ce96",
+      "request_key": "9dcd548f0620e5c8288d7000c8db16f207fbaf53ecf5cdd95333683a0079ce96",
+      "step": 2
+    }
+  ],
+  "fault": {
+    "fault": "error_text",
+    "outcome": {
+      "applied": true,
+      "fault": "error_text",
+      "message_index": 3,
+      "text": "Error: upstream service unavailable (503)",
+      "tool_call_id": "call_1",
+      "tool_name": "find_customer",
+      "was_bytes": 58
+    },
+    "params": {}
+  },
+  "fork_step": 1,
+  "id": "branch--stub-naive--baseline--T1_shipped_total--s1--error_text",
+  "kind": "branch",
+  "meta": {
+    "fault": "error_text",
+    "live_calls": 2,
+    "model": "stub/naive",
+    "step": 1,
+    "steps": [
+      {
+        "latency_ms": 0.237,
+        "request_key": "2a4f28063c294bc14ffd15f8ae2aa91207436476dd73cfb33e136a948933e60c",
+        "source": "cassette",
+        "step": 0,
+        "usage": {
+          "completion_tokens": 44,
+          "prompt_tokens": 98,
+          "total_tokens": 142
+        }
+      },
+      {
+        "fault": {
+          "applied": true,
+          "fault": "error_text",
+          "message_index": 3,
+          "text": "Error: upstream service unavailable (503)",
+          "tool_call_id": "call_1",
+          "tool_name": "find_customer",
+          "was_bytes": 58
+        },
+        "fault_present": true,
+        "latency_ms": 1.402,
+        "request_key": "f2ed248c71b47d783e4a7abc5820ae6bbafc40fe1ae7780e4ace94ccf777cc87",
+        "source": "live",
+        "step": 1,
+        "usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 167,
+          "total_tokens": 214
+        }
+      },
+      {
+        "fault_present": true,
+        "latency_ms": 0.865,
+        "request_key": "9dcd548f0620e5c8288d7000c8db16f207fbaf53ecf5cdd95333683a0079ce96",
+        "source": "live",
+        "step": 2,
+        "usage": {
+          "completion_tokens": 20,
+          "prompt_tokens": 234,
+          "total_tokens": 254
+        }
+      }
+    ],
+    "task": "T1_shipped_total",
+    "variant": "baseline"
+  },
+  "parent": "trunk--stub-naive--baseline--T1_shipped_total"
+}

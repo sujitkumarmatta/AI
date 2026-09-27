@@ -26,7 +26,7 @@
     "model": "stub/naive",
     "steps": [
       {
-        "latency_ms": 1.79,
+        "latency_ms": 1.788,
         "request_key": "2a4f28063c294bc14ffd15f8ae2aa91207436476dd73cfb33e136a948933e60c",
         "source": "live",
         "step": 0,
@@ -37,7 +37,7 @@
         }
       },
       {
-        "latency_ms": 1.137,
+        "latency_ms": 1.365,
         "request_key": "7375c7c9394ca8cf064204f8e4e5043183d421c2edeba87ea107fa40a1e20fa1",
         "source": "live",
         "step": 1,
@@ -48,7 +48,7 @@
         }
       },
       {
-        "latency_ms": 1.377,
+        "latency_ms": 1.783,
         "request_key": "9a91eaf3304beb1a875c091f2d06a46c2bb8ffcabe32717c891196ceca7edd0f",
         "source": "live",
         "step": 2,

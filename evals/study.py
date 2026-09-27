@@ -28,7 +28,7 @@ from evals.agent import AgentRun, run_agent
 from evals.stub_model import POLICIES, create_stub_model
 from evals.tasks import SYSTEM_PROMPTS, TASKS, Task
 from evals.world import World
-from misfeed.faults import FaultSpec
+from misfeed.faults import FAULT_IDS, FaultSpec
 from misfeed.proxy import Engine, Mode, ProxyConfig, create_app
 from misfeed.report import RunResult, markdown_report, summarise
 from misfeed.store import Store
@@ -36,9 +36,15 @@ from misfeed.verdict import RunFacts, answer_matches, classify, extract_answer, 
 
 __all__ = ["StudyConfig", "run_study"]
 
-# MVP fault set. The taxonomy has nine classes; the study starts with the three
-# that need no assumptions about payload shape, so that it works on any task.
-DEFAULT_FAULTS: tuple[str, ...] = ("empty_success", "partial_list", "missing_fields")
+# The whole taxonomy. The fixture is shaped so that every class can apply
+# somewhere: snake_case keys for schema_drift, ISO dates for stale, integer
+# amounts for unit_shift, a multi-row list for partial_list.
+#
+# Several of these will not change the answer to some tasks -- shifting a date
+# does not alter a count -- and that is worth measuring rather than avoiding. A
+# harness that only ever injects faults it knows will bite cannot tell you which
+# faults are harmless.
+DEFAULT_FAULTS: tuple[str, ...] = tuple(FAULT_IDS)
 
 
 @dataclass(slots=True)

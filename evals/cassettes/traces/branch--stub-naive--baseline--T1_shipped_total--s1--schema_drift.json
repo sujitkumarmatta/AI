@@ -1,0 +1,89 @@
+{
+  "entries": [
+    {
+      "blob": "ed9fafb75d634a94fdd08fe8d51f22f45def0964820f828359fbbe1107f9e021",
+      "request": "8821bb604bb944276ad02c41653ce766941053f482a68900821f0f99a93c2b6d",
+      "request_key": "8821bb604bb944276ad02c41653ce766941053f482a68900821f0f99a93c2b6d",
+      "step": 1
+    },
+    {
+      "blob": "861148495852a904e20e48c051e5ea793dbed8efb177d6c93efad84f2c43b792",
+      "request": "645e100859c82879508c0d3aa220af8b289f93d6052cd269cd4df3a335bed328",
+      "request_key": "645e100859c82879508c0d3aa220af8b289f93d6052cd269cd4df3a335bed328",
+      "step": 2
+    }
+  ],
+  "fault": {
+    "fault": "schema_drift",
+    "outcome": {
+      "applied": true,
+      "fault": "schema_drift",
+      "message_index": 3,
+      "renamed": {
+        "customer_id": "customerId"
+      },
+      "tool_call_id": "call_1",
+      "tool_name": "find_customer"
+    },
+    "params": {}
+  },
+  "fork_step": 1,
+  "id": "branch--stub-naive--baseline--T1_shipped_total--s1--schema_drift",
+  "kind": "branch",
+  "meta": {
+    "fault": "schema_drift",
+    "live_calls": 2,
+    "model": "stub/naive",
+    "step": 1,
+    "steps": [
+      {
+        "latency_ms": 0.232,
+        "request_key": "2a4f28063c294bc14ffd15f8ae2aa91207436476dd73cfb33e136a948933e60c",
+        "source": "cassette",
+        "step": 0,
+        "usage": {
+          "completion_tokens": 44,
+          "prompt_tokens": 98,
+          "total_tokens": 142
+        }
+      },
+      {
+        "fault": {
+          "applied": true,
+          "fault": "schema_drift",
+          "message_index": 3,
+          "renamed": {
+            "customer_id": "customerId"
+          },
+          "tool_call_id": "call_1",
+          "tool_name": "find_customer"
+        },
+        "fault_present": true,
+        "latency_ms": 0.92,
+        "request_key": "8821bb604bb944276ad02c41653ce766941053f482a68900821f0f99a93c2b6d",
+        "source": "live",
+        "step": 1,
+        "usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 174,
+          "total_tokens": 221
+        }
+      },
+      {
+        "fault_present": true,
+        "latency_ms": 0.82,
+        "request_key": "645e100859c82879508c0d3aa220af8b289f93d6052cd269cd4df3a335bed328",
+        "source": "live",
+        "step": 2,
+        "usage": {
+          "completion_tokens": 20,
+          "prompt_tokens": 241,
+          "total_tokens": 261
+        }
+      }
+    ],
+    "task": "T1_shipped_total",
+    "variant": "baseline"
+  },
+  "parent": "trunk--stub-naive--baseline--T1_shipped_total"
+}
